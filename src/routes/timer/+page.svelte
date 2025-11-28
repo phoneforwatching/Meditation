@@ -209,13 +209,13 @@
             type="number"
             bind:value={durationMinutes}
             min="1"
-            max="120"
+            max="999"
             class="text-4xl font-mono font-bold text-sage w-24 text-center bg-transparent border-b-2 border-sage/20 focus:border-sage focus:outline-none"
           />
           <button
             class="p-2 rounded-full hover:bg-earth/10 text-2xl w-10 h-10 flex items-center justify-center text-sage"
             on:click={() =>
-              (durationMinutes = Math.min(120, durationMinutes + 1))}>+</button
+              (durationMinutes = Math.min(999, durationMinutes + 1))}>+</button
           >
         </div>
       </div>
