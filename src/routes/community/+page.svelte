@@ -48,11 +48,13 @@
   }
 
   async function submitCheckin() {
-    if (!checkinPhoto) return;
+    if (!checkinPhoto && !checkinCaption) return;
     isSubmitting = true;
 
     const formData = new FormData();
-    formData.append("photo", checkinPhoto);
+    if (checkinPhoto) {
+      formData.append("photo", checkinPhoto);
+    }
     formData.append("mood", checkinMood.toString());
     formData.append("caption", checkinCaption);
 
@@ -304,7 +306,7 @@
     on:click={() => (showCheckinModal = true)}
   >
     <span class="text-2xl">📸</span>
-    <span class="font-bold hidden md:inline">Daily Check-in</span>
+    <span class="font-bold hidden md:inline">{$t("community.checkin")}</span>
   </button>
 
   <!-- Check-in Modal -->
@@ -321,7 +323,9 @@
           ✕
         </button>
 
-        <h2 class="text-2xl font-bold text-sage text-center">Daily Check-in</h2>
+        <h2 class="text-2xl font-bold text-sage text-center">
+          {$t("community.checkin")}
+        </h2>
 
         <div class="space-y-4">
           <!-- Photo Upload -->
@@ -337,7 +341,9 @@
                 />
               {:else}
                 <span class="text-4xl mb-2">📷</span>
-                <span class="text-sm text-slate/60">Take a photo</span>
+                <span class="text-sm text-slate/60"
+                  >{$t("community.photo")}</span
+                >
               {/if}
               <input
                 type="file"
@@ -352,7 +358,7 @@
           <!-- Mood Selector -->
           <div class="space-y-2">
             <div class="block text-sm font-medium text-slate text-center">
-              How are you feeling?
+              {$t("community.mood")}
             </div>
             <div class="flex justify-between px-2">
               {#each [1, 2, 3, 4, 5] as m}
@@ -372,7 +378,7 @@
           <!-- Caption -->
           <input
             type="text"
-            placeholder="Add a caption..."
+            placeholder={$t("community.placeholder")}
             bind:value={checkinCaption}
             class="w-full rounded-lg border-slate/20 focus:border-sage focus:ring-sage"
           />
@@ -382,7 +388,7 @@
             disabled={(!checkinPhoto && !checkinCaption) || isSubmitting}
             on:click={submitCheckin}
           >
-            {isSubmitting ? "Posting..." : "Post Check-in"}
+            {isSubmitting ? $t("community.posting") : $t("community.post")}
           </button>
         </div>
       </div>
@@ -443,7 +449,7 @@
               <div class="text-xs opacity-80 flex items-center gap-1">
                 <span>{MOODS[viewingStory.checkinMood]}</span>
                 <span>•</span>
-                <span>Just now</span>
+                <span>{$t("community.justNow")}</span>
               </div>
             </div>
           </div>

@@ -55,7 +55,14 @@ const translations = {
             title: 'Community Forest',
             subtitle: 'Growing together in silence.',
             empty: 'The forest is empty. Be the first seed! 🌱',
-            nudge: 'Nudge'
+            nudge: 'Nudge',
+            checkin: 'Daily Check-in',
+            post: 'Post Check-in',
+            posting: 'Posting...',
+            placeholder: 'Add a caption...',
+            mood: 'How are you feeling?',
+            photo: 'Take a photo',
+            justNow: 'Just now'
         },
         sleep: {
             title: 'Sleep Valley',
@@ -175,7 +182,14 @@ const translations = {
             title: 'ป่าชุมชน',
             subtitle: 'เติบโตไปด้วยกันในความเงียบสงบ',
             empty: 'ป่ายังว่างเปล่า มาเป็นเมล็ดพันธุ์แรกกันเถอะ! 🌱',
-            nudge: 'สะกิด'
+            nudge: 'สะกิด',
+            checkin: 'เช็คอินประจำวัน',
+            post: 'โพสต์เช็คอิน',
+            posting: 'กำลังโพสต์...',
+            placeholder: 'เขียนข้อความ...',
+            mood: 'คุณรู้สึกอย่างไร?',
+            photo: 'ถ่ายรูป',
+            justNow: 'เมื่อสักครู่'
         },
         sleep: {
             title: 'หุบเขานิทรา',

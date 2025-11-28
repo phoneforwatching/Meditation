@@ -14,8 +14,8 @@ export async function POST({ request, locals }) {
         const mood = Number(formData.get('mood'));
         const caption = formData.get('caption') as string;
 
-        if (!photo || !mood) {
-            return json({ error: 'Missing required fields' }, { status: 400 });
+        if ((!photo || photo.size === 0) && !caption) {
+            return json({ error: 'Must provide either photo or caption' }, { status: 400 });
         }
 
         // Upload to Supabase Storage (if photo exists)
@@ -45,8 +45,6 @@ export async function POST({ request, locals }) {
                 .getPublicUrl(fileName);
 
             publicUrl = data.publicUrl;
-        } else if (!caption) {
-            return json({ error: 'Must provide either photo or caption' }, { status: 400 });
         }
 
         // Save to DB
