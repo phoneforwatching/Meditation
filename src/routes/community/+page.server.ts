@@ -8,12 +8,13 @@ export async function load({ locals }) {
     const leaderboard = await db.select({
         id: users.id,
         displayName: profiles.displayName,
+        avatarUrl: profiles.avatarUrl,
         totalMinutes: sql<number>`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`.mapWith(Number),
     })
         .from(users)
         .leftJoin(profiles, eq(users.id, profiles.userId))
         .leftJoin(meditationSessions, eq(users.id, meditationSessions.userId))
-        .groupBy(users.id, profiles.displayName)
+        .groupBy(users.id, profiles.displayName, profiles.avatarUrl)
         .orderBy(desc(sql`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`));
 
     return {

@@ -32,6 +32,35 @@
         : "text-blue-300/50 hover:text-blue-200";
     }
   }
+
+  import { onMount, onDestroy } from "svelte";
+
+  let unreadMessageCount = 0;
+  let pollInterval;
+
+  $: if ($page.data.unreadMessageCount !== undefined) {
+    unreadMessageCount = $page.data.unreadMessageCount;
+  }
+
+  onMount(() => {
+    pollInterval = setInterval(async () => {
+      if ($page.data.user) {
+        try {
+          const res = await fetch("/api/messages/unread");
+          if (res.ok) {
+            const data = await res.json();
+            unreadMessageCount = data.count;
+          }
+        } catch (e) {
+          console.error("Failed to poll unread messages", e);
+        }
+      }
+    }, 10000);
+  });
+
+  onDestroy(() => {
+    if (pollInterval) clearInterval(pollInterval);
+  });
 </script>
 
 <div
@@ -86,6 +115,24 @@
   </nav>
 
   <main class="p-4 max-w-4xl mx-auto space-y-4 pb-24">
+    {#if unreadMessageCount > 0 && $page.url.pathname !== "/chat"}
+      <div
+        class="bg-blue-100 border border-blue-200 text-slate p-4 rounded-xl flex justify-between items-center animate-bounce-short"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-xl">💬</span>
+          <span>
+            You have <strong>{unreadMessageCount}</strong> unread message{unreadMessageCount >
+            1
+              ? "s"
+              : ""}!
+          </span>
+        </div>
+        <a href="/chat" class="text-sm font-bold text-blue-500 hover:underline">
+          View
+        </a>
+      </div>
+    {/if}
     {#if $page.data.nudges && $page.data.nudges.length > 0}
       <div
         class="bg-peach/20 border border-peach text-slate p-4 rounded-xl flex justify-between items-center animate-bounce-short"
@@ -162,6 +209,11 @@
           >
             <span class="text-2xl">👥</span>
             <span class="text-xs font-medium">{$t("nav.community")}</span>
+            {#if unreadMessageCount > 0}
+              <span
+                class="absolute top-2 right-4 w-3 h-3 bg-red-500 rounded-full border-2 border-white"
+              ></span>
+            {/if}
           </a>
 
           <!-- Sleep -->

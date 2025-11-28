@@ -99,9 +99,22 @@
           <!-- User Info -->
           <div class="mt-4 text-center space-y-1">
             <div
-              class="font-semibold text-slate text-sm flex items-center justify-center gap-1 bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm"
+              class="font-semibold text-slate text-sm flex items-center justify-center gap-2 bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm"
             >
-              {user.displayName || "Anonymous"}
+              {#if user.avatarUrl}
+                <img
+                  src={user.avatarUrl}
+                  alt={user.displayName}
+                  class="w-6 h-6 rounded-full object-cover border border-white/50"
+                />
+              {:else}
+                <div
+                  class="w-6 h-6 rounded-full bg-sage/20 flex items-center justify-center text-xs border border-white/50"
+                >
+                  {(user.displayName || "A")[0].toUpperCase()}
+                </div>
+              {/if}
+              <span>{user.displayName || "Anonymous"}</span>
               {#if isMe}
                 <span class="w-2 h-2 rounded-full bg-sage animate-pulse"></span>
               {/if}
