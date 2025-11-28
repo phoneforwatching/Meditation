@@ -1,7 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { dailyCheckins } from '$lib/server/schema';
+import { dailyCheckins, profiles } from '$lib/server/schema';
 import { getSupabaseAdmin } from '$lib/server/supabaseAdmin';
+import { broadcastNotification } from '$lib/server/notifications';
+import { eq } from 'drizzle-orm';
 
 export async function POST({ request, locals }) {
     if (!locals.user) {
@@ -54,6 +56,24 @@ export async function POST({ request, locals }) {
             mood,
             caption
         });
+
+        // Broadcast Notification
+        const [userProfile] = await db.select({ displayName: profiles.displayName })
+            .from(profiles)
+            .where(eq(profiles.userId, locals.user.id));
+
+        const userName = userProfile?.displayName || 'Someone';
+        const notificationMessage = caption
+            ? `${userName} posted a check-in: "${caption.substring(0, 30)}${caption.length > 30 ? '...' : ''}"`
+            : `${userName} posted a daily check-in`;
+
+        await broadcastNotification(
+            locals.user.id,
+            'activity',
+            'New Check-in',
+            notificationMessage,
+            '/community'
+        );
 
         return json({ success: true });
     } catch (e) {

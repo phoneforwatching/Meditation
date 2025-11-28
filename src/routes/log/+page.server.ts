@@ -1,6 +1,8 @@
 import { db } from '$lib/server/db';
-import { meditationSessions } from '$lib/server/schema';
+import { meditationSessions, profiles } from '$lib/server/schema';
 import { redirect, fail } from '@sveltejs/kit';
+import { broadcastNotification } from '$lib/server/notifications';
+import { eq } from 'drizzle-orm';
 
 export const actions = {
     default: async ({ request, locals }) => {
@@ -23,6 +25,21 @@ export const actions = {
             moodRating: mood,
             notes,
         });
+
+        // Broadcast Notification
+        const [userProfile] = await db.select({ displayName: profiles.displayName })
+            .from(profiles)
+            .where(eq(profiles.userId, locals.user.id));
+
+        const userName = userProfile?.displayName || 'Someone';
+
+        await broadcastNotification(
+            locals.user.id,
+            'activity',
+            'Meditation Complete',
+            `${userName} completed a ${duration} min meditation!`,
+            '/'
+        );
 
         throw redirect(303, '/');
     }

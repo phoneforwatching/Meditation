@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { messages, profiles } from '$lib/server/schema';
-import { eq, or, and, asc } from 'drizzle-orm';
+import { messages, profiles, notifications } from '$lib/server/schema';
+import { eq, or, and, asc, gt, desc } from 'drizzle-orm';
 import { createNotification } from '$lib/server/notifications';
 
 export async function POST({ request, locals }) {
@@ -23,20 +23,34 @@ export async function POST({ request, locals }) {
         content
     });
 
-    // Create Notification
-    const [senderProfile] = await db.select({ displayName: profiles.displayName })
-        .from(profiles)
-        .where(eq(profiles.userId, senderId));
+    // Smart Notification: Check if we already notified this user about a message from this sender recently (e.g., 15 mins)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
-    const senderName = senderProfile?.displayName || 'Someone';
+    const recentNotification = await db.select()
+        .from(notifications)
+        .where(and(
+            eq(notifications.userId, receiverId),
+            eq(notifications.type, 'message'),
+            eq(notifications.link, `/chat?userId=${senderId}`), // Link contains senderId
+            gt(notifications.createdAt, fifteenMinutesAgo)
+        ))
+        .limit(1);
 
-    await createNotification(
-        receiverId,
-        'message',
-        'New Message',
-        `${senderName} sent you a message`,
-        `/chat?userId=${senderId}`
-    );
+    if (recentNotification.length === 0) {
+        const [senderProfile] = await db.select({ displayName: profiles.displayName })
+            .from(profiles)
+            .where(eq(profiles.userId, senderId));
+
+        const senderName = senderProfile?.displayName || 'Someone';
+
+        await createNotification(
+            receiverId,
+            'message',
+            'New Message',
+            `${senderName} sent you a message`,
+            `/chat?userId=${senderId}`
+        );
+    }
 
     return json({ success: true });
 }
