@@ -39,3 +39,12 @@ export const sleepLogs = pgTable('sleep_logs', {
     quality: integer('quality').default(3), // 1-5
     createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const messages = pgTable('messages', {
+    id: serial('id').primaryKey(),
+    senderId: integer('sender_id').references(() => users.id).notNull(),
+    receiverId: integer('receiver_id').references(() => users.id).notNull(),
+    content: text('content').notNull(),
+    isRead: boolean('is_read').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+});

@@ -150,6 +150,16 @@
                 👋
               </button>
             {/if}
+
+            {#if !isMe}
+              <a
+                href="/chat/{user.id}"
+                class="opacity-0 group-hover:opacity-100 transition-opacity text-lg hover:scale-125 active:scale-95 p-1 inline-block ml-2"
+                title="Message {user.displayName}"
+              >
+                💬
+              </a>
+            {/if}
           </div>
         </div>
       {/each}
