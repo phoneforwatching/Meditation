@@ -4,10 +4,21 @@
   import { page } from "$app/stores";
   import { t } from "$lib/i18n";
 
-  let duration = Number($page.url.searchParams.get("duration")) || 10;
-  let isAutoDuration = !!$page.url.searchParams.get("duration");
-  let type = $page.url.searchParams.get("type") || "Breath";
+  $: durationParam = $page.url.searchParams.get("duration");
+  $: isAutoDuration = !!durationParam;
+  $: typeParam = $page.url.searchParams.get("type");
+
+  let duration = 10;
+  let type = "Breath";
   let mood = 3;
+
+  $: if (durationParam) {
+    duration = Number(durationParam);
+  }
+
+  $: if (typeParam) {
+    type = typeParam;
+  }
 
   const types = [
     "Breath",

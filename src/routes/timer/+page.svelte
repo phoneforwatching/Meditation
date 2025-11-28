@@ -32,6 +32,8 @@
     bgMusic.load();
   });
 
+  let endTime: number;
+
   function startTimer() {
     vibrate(HAPTIC_PATTERNS.TAP);
 
@@ -55,19 +57,29 @@
     }
 
     if (!isRunning) {
+      // Start new timer
       timeLeft = durationMinutes * 60;
+      endTime = Date.now() + timeLeft * 1000;
+    } else {
+      // Resume
+      endTime = Date.now() + timeLeft * 1000;
     }
+
     isRunning = true;
     isPaused = false;
     completed = false;
 
     interval = setInterval(() => {
-      if (timeLeft > 0) {
-        timeLeft--;
+      const now = Date.now();
+      const remaining = Math.ceil((endTime - now) / 1000);
+
+      if (remaining > 0) {
+        timeLeft = remaining;
       } else {
+        timeLeft = 0;
         finishTimer();
       }
-    }, 1000);
+    }, 100); // Check more frequently for smoothness
   }
 
   function pauseTimer() {
@@ -80,20 +92,7 @@
   }
 
   function resumeTimer() {
-    vibrate(HAPTIC_PATTERNS.TAP);
-    isPaused = false;
-    if (bgMusic) {
-      bgMusic
-        .play()
-        .catch((e) => console.log("Background music resume failed", e));
-    }
-    interval = setInterval(() => {
-      if (timeLeft > 0) {
-        timeLeft--;
-      } else {
-        finishTimer();
-      }
-    }, 1000);
+    startTimer(); // Reuse startTimer logic which handles resume
   }
 
   function stopTimer() {
@@ -196,7 +195,10 @@
       </fieldset>
 
       <div class="space-y-2">
-        <label class="block text-sm font-medium text-slate" for="durationMinutes">
+        <label
+          class="block text-sm font-medium text-slate"
+          for="durationMinutes"
+        >
           {$t("timer.duration")}
         </label>
         <div class="flex items-center justify-center gap-4">
