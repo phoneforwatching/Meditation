@@ -49,6 +49,7 @@
         >
       </div>
       {#if isAutoDuration}
+        <input type="hidden" name="duration" value={duration} />
         <p class="text-xs text-slate/60 italic">
           Duration recorded from actual session time
         </p>
