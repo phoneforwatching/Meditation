@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+.env
+.env.*
+!.env.example
+.svelte-kit
+.vercel
+.output
+build
+dist
+*.log
+client_secret_*.json
