@@ -32,28 +32,28 @@
       <label class="block text-sm font-medium text-slate" for="duration">
         Duration (minutes)
       </label>
-      <div class="flex items-center gap-4">
-        <input
-          id="duration"
-          type="range"
-          min="1"
-          max="999"
-          bind:value={duration}
-          disabled={isAutoDuration}
-          class="w-full accent-sage {isAutoDuration
-            ? 'opacity-50 cursor-not-allowed'
-            : ''}"
-          name="duration"
-        />
-        <span class="font-mono text-xl font-bold text-sage w-12 text-right"
-          >{duration}</span
-        >
-      </div>
       {#if isAutoDuration}
+        <div class="text-3xl font-bold text-sage font-mono py-2">
+          {duration}
+          <span class="text-base font-normal text-slate/60">minutes</span>
+        </div>
         <input type="hidden" name="duration" value={duration} />
-        <p class="text-xs text-slate/60 italic">
-          Duration recorded from actual session time
-        </p>
+        <p class="text-xs text-slate/60 italic">Recorded from actual session</p>
+      {:else}
+        <div class="flex items-center gap-4">
+          <input
+            id="duration"
+            type="range"
+            min="1"
+            max="999"
+            bind:value={duration}
+            class="w-full accent-sage"
+            name="duration"
+          />
+          <span class="font-mono text-xl font-bold text-sage w-12 text-right"
+            >{duration}</span
+          >
+        </div>
       {/if}
     </div>
 

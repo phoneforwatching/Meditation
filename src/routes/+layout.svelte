@@ -1,4 +1,5 @@
 <script lang="ts">
+  // Force rebuild
   import "../app.css";
   import { page } from "$app/stores";
   import { locale, t } from "$lib/i18n";
@@ -116,7 +117,7 @@
         ? 'text-sage'
         : 'text-blue-200'}"
     >
-      <span>🌳</span>
+      <img src="/logo.png" alt="Logo" class="w-8 h-8 object-contain" />
       {$t("nav.tree")}
     </a>
     <div class="flex items-center gap-4">

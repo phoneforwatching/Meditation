@@ -13,6 +13,68 @@
   ];
 
   let nudgedUsers = new Set<number>();
+
+  // Check-in State
+  let showCheckinModal = false;
+  let checkinPhoto: File | null = null;
+  let checkinPhotoPreview: string | null = null;
+  let checkinMood = 3;
+  let checkinCaption = "";
+  let isSubmitting = false;
+  let viewingStory: any = null;
+
+  const MOODS: Record<number, string> = {
+    1: "😫",
+    2: "😕",
+    3: "😐",
+    4: "🙂",
+    5: "😊",
+  };
+
+  const MOOD_COLORS: Record<number, string> = {
+    1: "border-red-400",
+    2: "border-orange-400",
+    3: "border-slate-400",
+    4: "border-blue-400",
+    5: "border-green-400",
+  };
+
+  function handlePhotoSelect(e: Event) {
+    const input = e.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      checkinPhoto = input.files[0];
+      checkinPhotoPreview = URL.createObjectURL(checkinPhoto);
+    }
+  }
+
+  async function submitCheckin() {
+    if (!checkinPhoto) return;
+    isSubmitting = true;
+
+    const formData = new FormData();
+    formData.append("photo", checkinPhoto);
+    formData.append("mood", checkinMood.toString());
+    formData.append("caption", checkinCaption);
+
+    try {
+      const res = await fetch("/api/community/checkin", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        showCheckinModal = false;
+        window.location.reload(); // Refresh to see new check-in
+      } else {
+        alert("Failed to post check-in");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error posting check-in");
+    } finally {
+      isSubmitting = false;
+    }
+  }
 </script>
 
 <div class="min-h-[80vh] flex flex-col">
@@ -59,6 +121,55 @@
           <div
             class="relative z-10 text-center transform transition-transform group-hover:scale-110"
           >
+            <!-- Daily Check-in Bubble -->
+            <!-- Daily Check-in / Note Bubble -->
+            {#if user.checkinPhoto || user.checkinCaption}
+              <div
+                class="absolute -top-24 left-1/2 -translate-x-1/2 z-20 animate-bounce-short flex flex-col items-center"
+              >
+                <!-- Note Bubble (IG Style) -->
+                {#if user.checkinCaption}
+                  <div
+                    class="mb-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-2xl shadow-sm border border-slate/10 text-xs font-medium text-slate-700 max-w-[120px] truncate relative group/note cursor-pointer hover:scale-105 transition-transform"
+                    title={user.checkinCaption}
+                    on:click|stopPropagation={() => (viewingStory = user)}
+                  >
+                    {user.checkinCaption}
+                    <!-- Little triangle pointing down -->
+                    <div
+                      class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white/90 rotate-45 border-b border-r border-slate/10"
+                    ></div>
+                  </div>
+                {/if}
+
+                {#if user.checkinPhoto}
+                  <div
+                    class="relative group/bubble cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                    on:click|stopPropagation={() => (viewingStory = user)}
+                    role="button"
+                    tabindex="0"
+                    on:keydown={(e) =>
+                      e.key === "Enter" && (viewingStory = user)}
+                  >
+                    <img
+                      src={user.checkinPhoto}
+                      alt="Check-in"
+                      class="w-20 h-20 rounded-full object-cover border-4 {user.checkinMood
+                        ? MOOD_COLORS[user.checkinMood]
+                        : 'border-white'} shadow-lg bg-white"
+                    />
+                    {#if user.checkinMood}
+                      <div
+                        class="absolute -bottom-1 -right-1 text-sm bg-white rounded-full w-5 h-5 flex items-center justify-center shadow-sm"
+                      >
+                        {MOODS[user.checkinMood]}
+                      </div>
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+            {/if}
+
             <div
               class="text-6xl filter drop-shadow-lg"
               style="font-size: {Math.max(
@@ -123,7 +234,7 @@
             <!-- Nudge Button -->
             {#if !isMe && !nudgedUsers.has(user.id)}
               <button
-                class="opacity-0 group-hover:opacity-100 transition-opacity text-lg hover:scale-125 active:scale-95 p-1"
+                class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-lg hover:scale-125 active:scale-95 p-1"
                 title="{$t('community.nudge')} {user.displayName}"
                 on:click={async (e) => {
                   const btn = e.currentTarget;
@@ -167,7 +278,7 @@
             {#if !isMe}
               <a
                 href="/chat/{user.id}"
-                class="opacity-0 group-hover:opacity-100 transition-opacity text-lg hover:scale-125 active:scale-95 p-1 inline-block ml-2"
+                class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-lg hover:scale-125 active:scale-95 p-1 inline-block ml-2"
                 title="Message {user.displayName}"
               >
                 💬
@@ -186,6 +297,180 @@
       {/if}
     </div>
   </div>
+
+  <!-- Check-in Button -->
+  <button
+    class="fixed bottom-24 right-6 bg-sage text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform z-40 flex items-center gap-2"
+    on:click={() => (showCheckinModal = true)}
+  >
+    <span class="text-2xl">📸</span>
+    <span class="font-bold hidden md:inline">Daily Check-in</span>
+  </button>
+
+  <!-- Check-in Modal -->
+  {#if showCheckinModal}
+    <div
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      transition:fade
+    >
+      <div class="bg-white rounded-2xl p-6 w-full max-w-md space-y-6 relative">
+        <button
+          class="absolute top-4 right-4 text-slate/40 hover:text-slate"
+          on:click={() => (showCheckinModal = false)}
+        >
+          ✕
+        </button>
+
+        <h2 class="text-2xl font-bold text-sage text-center">Daily Check-in</h2>
+
+        <div class="space-y-4">
+          <!-- Photo Upload -->
+          <div class="flex justify-center">
+            <label
+              class="w-48 h-48 rounded-full border-2 border-dashed border-slate/20 flex flex-col items-center justify-center cursor-pointer hover:bg-slate/5 transition relative overflow-hidden bg-slate-50"
+            >
+              {#if checkinPhotoPreview}
+                <img
+                  src={checkinPhotoPreview}
+                  alt="Preview"
+                  class="absolute inset-0 w-full h-full object-cover"
+                />
+              {:else}
+                <span class="text-4xl mb-2">📷</span>
+                <span class="text-sm text-slate/60">Take a photo</span>
+              {/if}
+              <input
+                type="file"
+                accept="image/*"
+                capture="user"
+                class="hidden"
+                on:change={handlePhotoSelect}
+              />
+            </label>
+          </div>
+
+          <!-- Mood Selector -->
+          <div class="space-y-2">
+            <div class="block text-sm font-medium text-slate text-center">
+              How are you feeling?
+            </div>
+            <div class="flex justify-between px-2">
+              {#each [1, 2, 3, 4, 5] as m}
+                <button
+                  class="text-3xl transition-transform hover:scale-125 {checkinMood ===
+                  m
+                    ? 'scale-125 grayscale-0'
+                    : 'grayscale opacity-50'}"
+                  on:click={() => (checkinMood = m)}
+                >
+                  {MOODS[m]}
+                </button>
+              {/each}
+            </div>
+          </div>
+
+          <!-- Caption -->
+          <input
+            type="text"
+            placeholder="Add a caption..."
+            bind:value={checkinCaption}
+            class="w-full rounded-lg border-slate/20 focus:border-sage focus:ring-sage"
+          />
+
+          <button
+            class="w-full bg-sage text-white font-bold py-3 rounded-xl shadow-md disabled:opacity-50"
+            disabled={(!checkinPhoto && !checkinCaption) || isSubmitting}
+            on:click={submitCheckin}
+          >
+            {isSubmitting ? "Posting..." : "Post Check-in"}
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Story Viewer Modal -->
+  {#if viewingStory}
+    <div
+      class="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4"
+      transition:fade={{ duration: 200 }}
+      on:click|self={() => (viewingStory = null)}
+    >
+      <button
+        class="absolute top-4 right-4 text-white/60 hover:text-white text-4xl z-50"
+        on:click={() => (viewingStory = null)}
+      >
+        ✕
+      </button>
+
+      <div
+        class="relative w-full max-w-lg aspect-[9/16] max-h-[90vh] flex flex-col"
+      >
+        <!-- Story Content -->
+        <div
+          class="relative flex-1 rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10"
+        >
+          <!-- Progress Bar (Static for now) -->
+          <div
+            class="absolute top-0 left-0 right-0 h-1 bg-white/20 z-20 m-2 rounded-full overflow-hidden"
+          >
+            <div
+              class="h-full bg-white w-full animate-[progress_5s_linear]"
+            ></div>
+          </div>
+
+          <!-- Header -->
+          <div
+            class="absolute top-4 left-0 right-0 p-4 flex items-center gap-3 z-20 bg-gradient-to-b from-black/50 to-transparent"
+          >
+            {#if viewingStory.avatarUrl}
+              <img
+                src={viewingStory.avatarUrl}
+                alt={viewingStory.displayName}
+                class="w-10 h-10 rounded-full border border-white/50"
+              />
+            {:else}
+              <div
+                class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold border border-white/50"
+              >
+                {(viewingStory.displayName || "A")[0].toUpperCase()}
+              </div>
+            {/if}
+            <div class="text-white">
+              <div class="font-bold text-sm shadow-black drop-shadow-md">
+                {viewingStory.displayName}
+              </div>
+              <div class="text-xs opacity-80 flex items-center gap-1">
+                <span>{MOODS[viewingStory.checkinMood]}</span>
+                <span>•</span>
+                <span>Just now</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Image -->
+          <img
+            src={viewingStory.checkinPhoto}
+            alt="Story"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+
+          <!-- Caption Overlay -->
+          {#if viewingStory.checkinCaption}
+            <div
+              class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-20"
+            >
+              <p
+                class="text-white text-lg text-center font-medium drop-shadow-md"
+              >
+                {viewingStory.checkinCaption}
+              </p>
+            </div>
+          {/if}
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>

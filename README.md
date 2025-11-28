@@ -42,7 +42,7 @@ Before you begin, ensure you have met the following requirements:
     cp .env.example .env
     ```
 
-    Update `.env` with your specific configuration (Supabase URL, Anon Key, Database URL, etc.).
+    Update `.env` with your specific configuration (Supabase URL, Anon Key, **Service Role Key for storage uploads**, Database URL, etc.).
 
 ## Database Setup
 
