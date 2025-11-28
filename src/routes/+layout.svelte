@@ -73,7 +73,7 @@
   <!-- Top Nav - Changes color based on page -->
   <nav
     class="p-4 flex justify-between items-center max-w-4xl mx-auto transition-colors duration-300 {isDarkPage
-      ? 'bg-slate-900/50 backdrop-blur-sm rounded-2xl mt-2'
+      ? 'bg-[#0B1026]/80 backdrop-blur-sm rounded-2xl mt-2 border border-white/10'
       : ''}"
   >
     <a
@@ -166,7 +166,7 @@
     <nav
       class="fixed bottom-0 left-0 right-0 border-t shadow-lg backdrop-blur-md z-50 transition-all duration-300 {!isDarkPage
         ? 'bg-white/80 border-earth/20'
-        : 'bg-slate-900/80 border-white/10'}"
+        : 'bg-[#0B1026]/90 border-white/10'}"
     >
       <div class="max-w-4xl mx-auto px-4 py-2">
         <div class="flex justify-around items-center">

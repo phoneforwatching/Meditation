@@ -20,6 +20,7 @@ export async function load({ locals }) {
         receiverId: messages.receiverId,
         createdAt: messages.createdAt,
         content: messages.content,
+        isRead: messages.isRead,
         otherUserId: sql<number>`CASE WHEN ${messages.senderId} = ${currentUserId} THEN ${messages.receiverId} ELSE ${messages.senderId} END`,
         otherUserName: profiles.displayName
     })
@@ -36,7 +37,11 @@ export async function load({ locals }) {
     for (const msg of recentMessages) {
         if (!seenUsers.has(msg.otherUserId)) {
             seenUsers.add(msg.otherUserId);
-            uniqueConversations.push(msg);
+            // It's unread if it's NOT read AND we are the receiver
+            // Note: We need to check receiverId from the message, but we didn't select it directly in a way that distinguishes row by row easily in the loop if we just rely on the join.
+            // Actually we did select senderId and receiverId.
+            const isUnread = !msg.isRead && msg.receiverId === currentUserId;
+            uniqueConversations.push({ ...msg, isUnread });
         }
     }
 

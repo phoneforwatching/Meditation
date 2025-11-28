@@ -27,11 +27,24 @@
                 {#each data.conversations as conv}
                     <a
                         href="/chat/{conv.otherUserId}"
-                        class="block p-4 hover:bg-white/60 transition-colors"
+                        class="block p-4 hover:bg-white/60 transition-colors {conv.isUnread
+                            ? 'bg-blue-50/50'
+                            : ''}"
                     >
                         <div class="flex items-center justify-between">
-                            <div class="font-bold text-slate">
-                                {conv.otherUserName || "Unknown User"}
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="font-bold text-slate {conv.isUnread
+                                        ? 'text-blue-900'
+                                        : ''}"
+                                >
+                                    {conv.otherUserName || "Unknown User"}
+                                </div>
+                                {#if conv.isUnread}
+                                    <div
+                                        class="w-2 h-2 rounded-full bg-blue-500"
+                                    ></div>
+                                {/if}
                             </div>
                             <div class="text-xs text-slate/40">
                                 {conv.createdAt
@@ -41,9 +54,15 @@
                                     : ""}
                             </div>
                         </div>
-                        <div class="text-sm text-slate/60 truncate mt-1">
+                        <div
+                            class="text-sm text-slate/60 truncate mt-1 {conv.isUnread
+                                ? 'font-semibold text-slate/80'
+                                : ''}"
+                        >
                             {#if conv.senderId === data.user.id}
-                                <span class="text-slate/40">You:</span>
+                                <span class="text-slate/40 font-normal"
+                                    >You:</span
+                                >
                             {/if}
                             {conv.content}
                         </div>
