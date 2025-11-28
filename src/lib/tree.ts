@@ -24,6 +24,21 @@ export const TREE_STAGES: TreeStage[] = [
     { id: 'sacred', name: 'ต้นไม้ศักดิ์สิทธิ์', minMinutes: 6000, maxMinutes: Infinity, symbol: '✨🌳✨', description: 'สัญลักษณ์แห่งปัญญาและการเชื่อมโยงอันลึกซึ้ง' },
 ];
 
+export const SLEEP_TREE_STAGES: TreeStage[] = [
+    { id: 'dream_seed', name: 'เมล็ดพันธุ์แห่งฝัน', minMinutes: 0, maxMinutes: 1439, symbol: '💤⚫', description: 'จุดเริ่มต้นของการพักผ่อน' },
+    { id: 'dream_sprout', name: 'ต้นกล้าแห่งนิทรา', minMinutes: 1440, maxMinutes: 4319, symbol: '💤🌱', description: 'การนอนหลับเริ่มหยั่งราก' },
+    { id: 'restful_sapling', name: 'ต้นอ่อนผ่อนคลาย', minMinutes: 4320, maxMinutes: 10079, symbol: '💤🌿', description: 'พักผ่อนอย่างสม่ำเสมอ' },
+    { id: 'deep_root', name: 'รากลึกหลับสบาย', minMinutes: 10080, maxMinutes: 21599, symbol: '💤🪴', description: 'การนอนที่มีคุณภาพ' },
+    { id: 'slumber_tree', name: 'ต้นไม้แห่งการหลับใหล', minMinutes: 21600, maxMinutes: 43199, symbol: '💤🌲', description: 'เติบโตด้วยการพักผ่อนที่ดี' },
+    { id: 'dream_canopy', name: 'ร่มเงาแห่งความฝัน', minMinutes: 43200, maxMinutes: 129599, symbol: '💤🌳', description: 'คุ้มครองค่ำคืนอันยาวนาน' },
+    { id: 'night_guardian', name: 'ผู้พิทักษ์ราตรี', minMinutes: 129600, maxMinutes: 259199, symbol: '💤🦉🌳', description: 'เฝ้ามองยามค่ำคืน' },
+    { id: 'eternal_rest', name: 'นิรันดร์นิทรา', minMinutes: 259200, maxMinutes: Infinity, symbol: '✨💤🌳✨', description: 'ความสงบสุขที่แท้จริง' },
+];
+
 export function getTreeStage(totalMinutes: number): TreeStage {
     return TREE_STAGES.find(stage => totalMinutes >= stage.minMinutes && totalMinutes <= stage.maxMinutes) || TREE_STAGES[TREE_STAGES.length - 1];
+}
+
+export function getSleepTreeStage(totalMinutes: number): TreeStage {
+    return SLEEP_TREE_STAGES.find(stage => totalMinutes >= stage.minMinutes && totalMinutes <= stage.maxMinutes) || SLEEP_TREE_STAGES[SLEEP_TREE_STAGES.length - 1];
 }

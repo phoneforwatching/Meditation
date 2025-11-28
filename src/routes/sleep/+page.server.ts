@@ -1,10 +1,19 @@
 import { db } from '$lib/server/db';
 import { sleepLogs } from '$lib/server/schema';
-import { eq, desc, gte, and } from 'drizzle-orm';
+import { eq, desc, gte, and, sql } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 
 export const load = async ({ locals }) => {
     if (!locals.user) throw redirect(302, '/login');
+
+    // Calculate total sleep minutes
+    const totalSleepResult = await db.select({
+        totalMinutes: sql<number>`sum(${sleepLogs.durationMinutes})`
+    })
+    .from(sleepLogs)
+    .where(eq(sleepLogs.userId, locals.user.id));
+
+    const totalSleepMinutes = totalSleepResult[0]?.totalMinutes || 0;
 
     // Fetch last 7 days of sleep logs
     const sevenDaysAgo = new Date();
@@ -17,7 +26,8 @@ export const load = async ({ locals }) => {
 
     return {
         recentLogs,
-        user: locals.user
+        user: locals.user,
+        totalSleepMinutes
     };
 };
 

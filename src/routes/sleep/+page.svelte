@@ -2,9 +2,12 @@
     import { enhance } from "$app/forms";
     import { fade, fly } from "svelte/transition";
     import { t, locale } from "$lib/i18n";
+    import { getSleepTreeStage } from "$lib/tree";
     export let data;
 
     let logging = false;
+
+    $: sleepTreeStage = getSleepTreeStage(data.totalSleepMinutes);
 
     // Calendar Logic
     let currentDate = new Date();
@@ -119,7 +122,14 @@
         <!-- Tree & Fireflies Scene -->
         <div class="relative h-64 flex items-end justify-center">
             <!-- Silhouette Tree -->
-            <div class="text-9xl filter drop-shadow-2xl opacity-80">🌳</div>
+            <div class="flex flex-col items-center z-10">
+                <div class="text-9xl filter drop-shadow-2xl opacity-80 transition-all duration-1000 transform hover:scale-110 cursor-help" title={sleepTreeStage.description}>
+                    {sleepTreeStage.symbol.replace('💤', '')}
+                </div>
+                <div class="mt-2 text-sm font-medium text-blue-200/80 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                    {sleepTreeStage.name}
+                </div>
+            </div>
 
             <!-- Fireflies -->
             {#each fireflies as fly}
