@@ -29,11 +29,12 @@
   >
     <!-- Duration -->
     <div class="space-y-2">
-      <label class="block text-sm font-medium text-slate"
-        >Duration (minutes)</label
-      >
+      <label class="block text-sm font-medium text-slate" for="duration">
+        Duration (minutes)
+      </label>
       <div class="flex items-center gap-4">
         <input
+          id="duration"
           type="range"
           min="1"
           max="999"
@@ -57,8 +58,8 @@
     </div>
 
     <!-- Type -->
-    <div class="space-y-2">
-      <label class="block text-sm font-medium text-slate">Type</label>
+    <fieldset class="space-y-2">
+      <legend class="block text-sm font-medium text-slate">Type</legend>
       <div class="flex flex-wrap gap-2">
         {#each types as t}
           <button
@@ -74,11 +75,11 @@
         {/each}
         <input type="hidden" name="type" value={type} />
       </div>
-    </div>
+    </fieldset>
 
     <!-- Mood -->
-    <div class="space-y-2">
-      <label class="block text-sm font-medium text-slate">Mood (After)</label>
+    <fieldset class="space-y-2">
+      <legend class="block text-sm font-medium text-slate">Mood (After)</legend>
       <div class="flex justify-between px-2">
         {#each [1, 2, 3, 4, 5] as m}
           <button
@@ -93,14 +94,15 @@
         {/each}
         <input type="hidden" name="mood" value={mood} />
       </div>
-    </div>
+    </fieldset>
 
     <!-- Notes -->
     <div class="space-y-2">
-      <label class="block text-sm font-medium text-slate"
-        >Notes (Optional)</label
-      >
+      <label class="block text-sm font-medium text-slate" for="notes">
+        Notes (Optional)
+      </label>
       <textarea
+        id="notes"
         name="notes"
         rows="3"
         class="w-full rounded-lg border-slate/20 focus:border-sage focus:ring-sage"

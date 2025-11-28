@@ -175,10 +175,10 @@
       <h1 class="text-3xl font-bold text-sage">{$t("timer.ready")}</h1>
 
       <!-- Preset Timer Buttons -->
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-slate"
-          >{$t("timer.quickStart")}</label
-        >
+      <fieldset class="space-y-2">
+        <legend class="block text-sm font-medium text-slate">
+          {$t("timer.quickStart")}
+        </legend>
         <div class="flex flex-wrap gap-2 justify-center">
           {#each [5, 10, 15, 20, 30] as preset}
             <button
@@ -193,12 +193,12 @@
             </button>
           {/each}
         </div>
-      </div>
+      </fieldset>
 
       <div class="space-y-2">
-        <label class="block text-sm font-medium text-slate"
-          >{$t("timer.duration")}</label
-        >
+        <label class="block text-sm font-medium text-slate" for="durationMinutes">
+          {$t("timer.duration")}
+        </label>
         <div class="flex items-center justify-center gap-4">
           <button
             class="p-2 rounded-full hover:bg-earth/10 text-2xl w-10 h-10 flex items-center justify-center text-sage"
@@ -206,6 +206,7 @@
               (durationMinutes = Math.max(1, durationMinutes - 1))}>-</button
           >
           <input
+            id="durationMinutes"
             type="number"
             bind:value={durationMinutes}
             min="1"

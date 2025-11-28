@@ -1,14 +1,17 @@
 <script lang="ts">
   import { t, locale } from "$lib/i18n";
 
-  export let sessions: { completedAt: Date | string; durationMinutes: number }[] = [];
+  export let sessions: {
+    completedAt: Date | string | null;
+    durationMinutes: number;
+  }[] = [];
 
   // Helper to get date string YYYY-MM-DD
   const getDateStr = (date: Date) => date.toISOString().split('T')[0];
 
   // Generate last 365 days
   const today = new Date();
-  const days = [];
+  const days: Date[] = [];
   for (let i = 364; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
@@ -42,7 +45,7 @@
   ];
 
   // Group days by week for grid layout
-  $: weeks = days.reduce((acc, day, i) => {
+  $: weeks = days.reduce((acc: Date[][], day, i) => {
     const weekIndex = Math.floor(i / 7);
     if (!acc[weekIndex]) acc[weekIndex] = [];
     acc[weekIndex].push(day);

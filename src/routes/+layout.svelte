@@ -1,7 +1,8 @@
-<script>
+<script lang="ts">
   import "../app.css";
   import { page } from "$app/stores";
   import { locale, t } from "$lib/i18n";
+  import type { RealtimeChannel } from "@supabase/supabase-js";
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -18,7 +19,7 @@
     $page.url.pathname === "/login" || $page.url.pathname === "/signup";
 
   // Helper function for navigation item classes
-  function getNavItemClass(path, isDark, currentPath) {
+  function getNavItemClass(path: string, isDark: boolean, currentPath: string) {
     const isActive = currentPath === path;
     if (!isDark) {
       // Light theme
@@ -34,32 +35,65 @@
   }
 
   import { onMount, onDestroy } from "svelte";
+  import { supabase } from "$lib/supabaseClient";
 
   let unreadMessageCount = 0;
-  let pollInterval;
+  let subscription: RealtimeChannel | null = null;
 
   $: if ($page.data.unreadMessageCount !== undefined) {
     unreadMessageCount = $page.data.unreadMessageCount;
   }
 
-  onMount(() => {
-    pollInterval = setInterval(async () => {
-      if ($page.data.user) {
-        try {
-          const res = await fetch("/api/messages/unread");
-          if (res.ok) {
-            const data = await res.json();
-            unreadMessageCount = data.count;
-          }
-        } catch (e) {
-          console.error("Failed to poll unread messages", e);
+  async function updateUnreadCount() {
+    if ($page.data.user) {
+      try {
+        const res = await fetch("/api/messages/unread");
+        if (res.ok) {
+          const data = await res.json();
+          unreadMessageCount = data.count;
         }
+      } catch (e) {
+        console.error("Failed to fetch unread messages", e);
       }
-    }, 10000);
+    }
+  }
+
+  onMount(() => {
+    // Initial fetch
+    updateUnreadCount();
+
+    // Subscribe to Supabase Realtime
+    subscription = supabase
+      .channel(`notifications:${$page.data.user?.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          // If a new message is inserted for us
+          if (
+            payload.eventType === "INSERT" &&
+            payload.new.receiver_id === $page.data.user?.id
+          ) {
+            updateUnreadCount();
+          }
+          // If a message we received is updated (e.g. read status changed)
+          else if (
+            payload.eventType === "UPDATE" &&
+            payload.new.receiver_id === $page.data.user?.id
+          ) {
+            updateUnreadCount();
+          }
+        },
+      )
+      .subscribe();
   });
 
   onDestroy(() => {
-    if (pollInterval) clearInterval(pollInterval);
+    if (subscription) supabase.removeChannel(subscription);
   });
 </script>
 

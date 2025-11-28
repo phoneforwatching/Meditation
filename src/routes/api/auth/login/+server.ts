@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/schema';
+import { users, profiles } from '$lib/server/schema';
 import { comparePassword, createToken } from '$lib/server/auth';
 import { eq } from 'drizzle-orm';
 
@@ -12,17 +12,28 @@ export async function POST({ request, cookies }) {
     }
 
     try {
-        const [user] = await db.select().from(users).where(eq(users.email, email));
-        if (!user) {
+        const [result] = await db.select({
+            user: users,
+            profile: profiles
+        })
+            .from(users)
+            .leftJoin(profiles, eq(users.id, profiles.userId))
+            .where(eq(users.email, email));
+
+        if (!result?.user) {
             return json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        const valid = await comparePassword(password, user.passwordHash);
+        if (!result.user.passwordHash) {
+            return json({ error: 'This account does not support password login' }, { status: 401 });
+        }
+
+        const valid = await comparePassword(password, result.user.passwordHash);
         if (!valid) {
             return json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        const token = createToken(user.id);
+        const token = createToken(result.user.id);
         cookies.set('session', token, {
             path: '/',
             httpOnly: true,
@@ -31,7 +42,13 @@ export async function POST({ request, cookies }) {
             maxAge: 60 * 60 * 24 * 7, // 7 days
         });
 
-        return json({ user: { id: user.id, email: user.email, displayName: user.displayName } });
+        return json({
+            user: {
+                id: result.user.id,
+                email: result.user.email,
+                displayName: result.profile?.displayName || null
+            }
+        });
     } catch (e) {
         console.error(e);
         return json({ error: 'Server error' }, { status: 500 });

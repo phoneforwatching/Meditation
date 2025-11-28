@@ -8,7 +8,9 @@
     let messages = data.initialMessages;
     let newMessage = "";
     let chatContainer: HTMLElement;
-    let pollInterval: any;
+    import { supabase } from "$lib/supabaseClient";
+
+    let subscription: any;
 
     function scrollToBottom() {
         if (chatContainer) {
@@ -32,46 +34,62 @@
         scrollToBottom();
         markAsRead();
 
-        // Poll for new messages every 3 seconds
-        pollInterval = setInterval(async () => {
-            const res = await fetch(
-                `/api/messages?userId=${data.otherUser.id}`,
-            );
-            if (res.ok) {
-                const latestMessages = await res.json();
-                // Check if we have new messages OR if read status changed
-                // Simple comparison of length or last message status
-                const hasNew = latestMessages.length !== messages.length;
-                const lastMsgChanged =
-                    latestMessages.length > 0 &&
-                    messages.length > 0 &&
-                    latestMessages[latestMessages.length - 1].isRead !==
-                        messages[messages.length - 1].isRead;
-
-                if (hasNew || lastMsgChanged) {
-                    messages = latestMessages.map((m: any) => ({
-                        ...m,
-                        createdAt: m.createdAt ? new Date(m.createdAt) : null,
-                    }));
-
-                    if (hasNew) {
-                        // Only mark as read if we actually got new messages from them
-                        const lastMsg =
-                            latestMessages[latestMessages.length - 1];
+        // Subscribe to Supabase Realtime
+        subscription = supabase
+            .channel(`chat:${data.currentUserId}:${data.otherUser.id}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "messages",
+                },
+                (payload) => {
+                    if (payload.eventType === "INSERT") {
+                        const newMsg = payload.new;
+                        // Check if message belongs to this conversation
                         if (
-                            lastMsg.senderId === data.otherUser.id &&
-                            !lastMsg.isRead
+                            (newMsg.sender_id === data.otherUser.id &&
+                                newMsg.receiver_id === data.currentUserId) ||
+                            (newMsg.sender_id === data.currentUserId &&
+                                newMsg.receiver_id === data.otherUser.id)
                         ) {
-                            markAsRead();
+                            const msg = {
+                                id: newMsg.id,
+                                senderId: newMsg.sender_id,
+                                receiverId: newMsg.receiver_id,
+                                content: newMsg.content,
+                                createdAt: new Date(newMsg.created_at),
+                                isRead: newMsg.is_read,
+                            };
+                            messages = [...messages, msg];
+                            scrollToBottom();
+
+                            if (msg.senderId === data.otherUser.id) {
+                                markAsRead();
+                            }
                         }
+                    } else if (payload.eventType === "UPDATE") {
+                        const updatedMsg = payload.new;
+                        messages = messages.map((m) =>
+                            m.id === updatedMsg.id
+                                ? {
+                                      ...m,
+                                      isRead: updatedMsg.is_read,
+                                      createdAt: new Date(
+                                          updatedMsg.created_at,
+                                      ),
+                                  }
+                                : m,
+                        );
                     }
-                }
-            }
-        }, 3000);
+                },
+            )
+            .subscribe();
     });
 
     onDestroy(() => {
-        if (pollInterval) clearInterval(pollInterval);
+        if (subscription) supabase.removeChannel(subscription);
     });
 
     async function sendMessage() {

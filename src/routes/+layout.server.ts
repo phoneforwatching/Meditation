@@ -3,7 +3,7 @@ import { nudges, users, profiles, messages } from '$lib/server/schema';
 import { eq, and, desc, count } from 'drizzle-orm';
 
 export const load = async ({ locals }) => {
-    let unreadNudges = [];
+    let unreadNudges: { senderName: string | null; createdAt: Date | null }[] = [];
     let unreadMessageCount = 0;
 
     if (locals.user) {
@@ -24,7 +24,7 @@ export const load = async ({ locals }) => {
                 eq(messages.isRead, false)
             ));
 
-        unreadMessageCount = messageCount.count;
+        unreadMessageCount = Number(messageCount.count ?? 0);
     }
 
     return {
