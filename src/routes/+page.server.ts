@@ -64,6 +64,20 @@ export async function load({ locals }) {
         }
     }
 
+    // Group by type
+    const typeDistribution: Record<string, number> = {};
+    sessions.forEach(s => {
+        typeDistribution[s.sessionType] = (typeDistribution[s.sessionType] || 0) + 1;
+    });
+
+    // Group by day for all history
+    const dailyMinutes: Record<string, number> = {};
+    sessions.forEach(s => {
+        if (!s.completedAt) return;
+        const date = new Date(s.completedAt).toISOString().split('T')[0];
+        dailyMinutes[date] = (dailyMinutes[date] || 0) + s.durationMinutes;
+    });
+
     return {
         user: locals.user,
         totalMinutes,
@@ -71,6 +85,8 @@ export async function load({ locals }) {
         streak,
         recentSessions: sessions.slice(0, 5),
         allSessions: sessions, // Send all sessions for heatmap
+        typeDistribution,
+        dailyMinutes,
         achievements: evaluateAchievements({
             totalMinutes,
             totalSessions,

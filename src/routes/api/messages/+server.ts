@@ -1,7 +1,8 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { messages } from '$lib/server/schema';
+import { messages, profiles } from '$lib/server/schema';
 import { eq, or, and, asc } from 'drizzle-orm';
+import { createNotification } from '$lib/server/notifications';
 
 export async function POST({ request, locals }) {
     if (!locals.user) {
@@ -21,6 +22,21 @@ export async function POST({ request, locals }) {
         receiverId,
         content
     });
+
+    // Create Notification
+    const [senderProfile] = await db.select({ displayName: profiles.displayName })
+        .from(profiles)
+        .where(eq(profiles.userId, senderId));
+
+    const senderName = senderProfile?.displayName || 'Someone';
+
+    await createNotification(
+        receiverId,
+        'message',
+        'New Message',
+        `${senderName} sent you a message`,
+        `/chat?userId=${senderId}`
+    );
 
     return json({ success: true });
 }

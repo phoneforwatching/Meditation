@@ -79,3 +79,14 @@ export const messages = pgTable('messages', {
     isRead: boolean('is_read').default(false),
     createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const notifications = pgTable('notifications', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id).notNull(),
+    type: text('type', { enum: ['message', 'nudge', 'activity'] }).notNull(),
+    title: text('title').notNull(),
+    message: text('message').notNull(),
+    link: text('link'),
+    isRead: boolean('is_read').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+});

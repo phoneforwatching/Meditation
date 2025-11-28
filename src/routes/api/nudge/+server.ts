@@ -1,7 +1,8 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { nudges } from '$lib/server/schema';
+import { nudges, profiles } from '$lib/server/schema';
 import { and, eq, gt, desc } from 'drizzle-orm';
+import { createNotification } from '$lib/server/notifications';
 
 export async function POST({ request, locals }) {
     if (!locals.user) return json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,6 +33,21 @@ export async function POST({ request, locals }) {
         senderId: locals.user.id,
         receiverId,
     });
+
+    // Create Notification
+    const [senderProfile] = await db.select({ displayName: profiles.displayName })
+        .from(profiles)
+        .where(eq(profiles.userId, locals.user.id));
+
+    const senderName = senderProfile?.displayName || 'Someone';
+
+    await createNotification(
+        receiverId,
+        'nudge',
+        'You were nudged!',
+        `${senderName} nudged you to meditate.`,
+        '/timer'
+    );
 
     return json({ success: true });
 }

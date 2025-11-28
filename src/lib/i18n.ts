@@ -9,6 +9,7 @@ const translations = {
             community: 'Community',
             sleep: 'Sleep',
             stats: 'Stats',
+            chat: 'Chat',
             hello: 'Hello',
             logout: 'Logout'
         },
@@ -136,6 +137,7 @@ const translations = {
             community: 'ชุมชน',
             sleep: 'นอนหลับ',
             stats: 'สถิติ',
+            chat: 'แชท',
             hello: 'สวัสดี',
             logout: 'ออกจากระบบ'
         },

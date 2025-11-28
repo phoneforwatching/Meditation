@@ -3,6 +3,7 @@
     import { fade, fly } from "svelte/transition";
     import { t, locale } from "$lib/i18n";
     import { getSleepTreeStage } from "$lib/tree";
+    import TimePicker from "$lib/components/TimePicker.svelte";
     export let data;
 
     let logging = false;
@@ -89,6 +90,30 @@
 
     let defaultWakeTime = getLocalISOString(now);
     let defaultBedtime = getLocalISOString(yesterday);
+
+    let bedtime = defaultBedtime.slice(11, 16);
+    let wakeTime = defaultWakeTime.slice(11, 16);
+    let date = defaultBedtime.slice(0, 10);
+
+    function applySuggestion(type: "yesterday" | "weekday" | "weekend") {
+        if (type === "yesterday" && data.recentLogs.length > 0) {
+            const last = data.recentLogs[0];
+            bedtime = new Date(last.bedtime).toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+            wakeTime = new Date(last.wakeTime).toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        } else if (type === "weekday") {
+            bedtime = "23:00";
+            wakeTime = "07:00";
+        } else if (type === "weekend") {
+            bedtime = "00:00";
+            wakeTime = "09:00";
+        }
+    }
 </script>
 
 <div
@@ -123,10 +148,15 @@
         <div class="relative h-64 flex items-end justify-center">
             <!-- Silhouette Tree -->
             <div class="flex flex-col items-center z-10">
-                <div class="text-9xl filter drop-shadow-2xl opacity-80 transition-all duration-1000 transform hover:scale-110 cursor-help" title={sleepTreeStage.description}>
-                    {sleepTreeStage.symbol.replace('💤', '')}
+                <div
+                    class="text-9xl filter drop-shadow-2xl opacity-80 transition-all duration-1000 transform hover:scale-110 cursor-help"
+                    title={sleepTreeStage.description}
+                >
+                    {sleepTreeStage.symbol.replace("💤", "")}
                 </div>
-                <div class="mt-2 text-sm font-medium text-blue-200/80 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                <div
+                    class="mt-2 text-sm font-medium text-blue-200/80 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10"
+                >
                     {sleepTreeStage.name}
                 </div>
             </div>
@@ -295,35 +325,57 @@
             >
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label
-                            for="bedtime"
-                            class="text-xs text-blue-200/80 ml-1"
-                            >{$t("sleep.bedtime")}</label
-                        >
                         <input
-                            id="bedtime"
-                            type="datetime-local"
+                            type="hidden"
                             name="bedtime"
-                            value={defaultBedtime}
-                            required
-                            class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-colors"
+                            value="{date}T{bedtime}"
+                        />
+                        <TimePicker
+                            label={$t("sleep.bedtime")}
+                            bind:value={bedtime}
                         />
                     </div>
                     <div class="space-y-1">
-                        <label
-                            for="wakeTime"
-                            class="text-xs text-blue-200/80 ml-1"
-                            >{$t("sleep.wakeTime")}</label
-                        >
                         <input
-                            id="wakeTime"
-                            type="datetime-local"
+                            type="hidden"
                             name="wakeTime"
-                            value={defaultWakeTime}
-                            required
-                            class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-colors"
+                            value="{date}T{wakeTime}"
+                        />
+                        <TimePicker
+                            label={$t("sleep.wakeTime")}
+                            bind:value={wakeTime}
                         />
                     </div>
+                </div>
+
+                <!-- Suggestions -->
+                <div class="flex gap-2 w-full">
+                    {#if data.recentLogs.length > 0}
+                        <button
+                            type="button"
+                            class="flex-1 px-2 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-blue-200/80 transition-colors flex items-center justify-center gap-1"
+                            on:click={() => applySuggestion("yesterday")}
+                        >
+                            <span>↺</span>
+                            <span class="truncate">Yesterday</span>
+                        </button>
+                    {/if}
+                    <button
+                        type="button"
+                        class="flex-1 px-2 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-blue-200/80 transition-colors flex items-center justify-center gap-1"
+                        on:click={() => applySuggestion("weekday")}
+                    >
+                        <span>🏢</span>
+                        <span class="truncate">Weekday</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="flex-1 px-2 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-blue-200/80 transition-colors flex items-center justify-center gap-1"
+                        on:click={() => applySuggestion("weekend")}
+                    >
+                        <span>🎉</span>
+                        <span class="truncate">Weekend</span>
+                    </button>
                 </div>
 
                 <button
@@ -373,9 +425,13 @@
                             method="POST"
                             use:enhance
                             on:submit={(e) => {
-                                if (!confirm($locale === 'th' 
-                                    ? `ต้องการลบบันทึกการนอนวันที่ ${formatDate(log.bedtime)} หรือไม่?`
-                                    : `Delete sleep log from ${formatDate(log.bedtime)}?`)) {
+                                if (
+                                    !confirm(
+                                        $locale === "th"
+                                            ? `ต้องการลบบันทึกการนอนวันที่ ${formatDate(log.bedtime)} หรือไม่?`
+                                            : `Delete sleep log from ${formatDate(log.bedtime)}?`,
+                                    )
+                                ) {
                                     e.preventDefault();
                                 }
                             }}
