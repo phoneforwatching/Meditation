@@ -3,11 +3,33 @@ import { pgTable, serial, text, integer, timestamp, boolean } from 'drizzle-orm/
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
     email: text('email').notNull().unique(),
+    // New fields
+    emailVerified: timestamp('email_verified'),
     passwordHash: text('password_hash'),
-    googleId: text('google_id').unique(),
+    role: text('role', { enum: ['user', 'admin'] }).default('user'),
+    updatedAt: timestamp('updated_at').defaultNow(),
+    lastActiveAt: timestamp('last_active_at'),
+
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const profiles = pgTable('profiles', {
+    userId: integer('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
     displayName: text('display_name'),
+    avatarUrl: text('avatar_url'),
+    bio: text('bio'),
     timezone: text('timezone').default('UTC'),
     dailyGoalMinutes: integer('daily_goal_minutes').default(10),
+});
+
+export const accounts = pgTable('accounts', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    provider: text('provider').notNull(),
+    providerAccountId: text('provider_account_id').notNull(),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    expiresAt: timestamp('expires_at'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 

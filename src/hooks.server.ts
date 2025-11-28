@@ -1,6 +1,6 @@
 import { verifyToken } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/schema';
+import { users, profiles } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
 import type { Handle } from '@sveltejs/kit';
 
@@ -8,7 +8,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     // Handle ngrok forwarded headers
     const forwardedProto = event.request.headers.get('x-forwarded-proto');
     const forwardedHost = event.request.headers.get('x-forwarded-host');
-    
+
     if (forwardedProto && forwardedHost) {
         // Reconstruct the URL with the forwarded headers
         const originalUrl = event.url;
@@ -17,7 +17,7 @@ export const handle: Handle = async ({ event, resolve }) => {
             `${forwardedProto}://${forwardedHost}`
         );
     }
-    
+
     const token = event.cookies.get('session');
 
     if (token) {
@@ -25,13 +25,20 @@ export const handle: Handle = async ({ event, resolve }) => {
         const payload = verifyToken(token);
         if (payload) {
             try {
-                const [user] = await db.select().from(users).where(eq(users.id, payload.userId));
-                if (user) {
-                    console.log(`[${event.url.pathname}] User found: ${user.email}`);
+                const [result] = await db.select({
+                    user: users,
+                    profile: profiles
+                })
+                    .from(users)
+                    .leftJoin(profiles, eq(users.id, profiles.userId))
+                    .where(eq(users.id, payload.userId));
+
+                if (result) {
+                    console.log(`[${event.url.pathname}] User found: ${result.user.email}`);
                     event.locals.user = {
-                        id: user.id,
-                        email: user.email,
-                        displayName: user.displayName,
+                        id: result.user.id,
+                        email: result.user.email,
+                        displayName: result.profile?.displayName || null,
                     };
                 } else {
                     console.log(`[${event.url.pathname}] User not found in DB for ID: ${payload.userId}`);

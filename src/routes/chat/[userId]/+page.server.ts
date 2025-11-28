@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { users, messages } from '$lib/server/schema';
+import { users, messages, profiles } from '$lib/server/schema';
 import { eq, or, and, asc } from 'drizzle-orm';
 import { redirect, error } from '@sveltejs/kit';
 
@@ -16,7 +16,13 @@ export async function load({ params, locals }) {
     }
 
     // Get other user details
-    const [otherUser] = await db.select().from(users).where(eq(users.id, otherUserId));
+    const [otherUser] = await db.select({
+        id: users.id,
+        displayName: profiles.displayName
+    })
+        .from(users)
+        .leftJoin(profiles, eq(users.id, profiles.userId))
+        .where(eq(users.id, otherUserId));
 
     if (!otherUser) {
         throw error(404, 'User not found');
