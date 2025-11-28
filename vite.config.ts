@@ -6,5 +6,10 @@ export default defineConfig({
 	server: {
 		port: 5174,
 		allowedHosts: ['erna-colourational-suffusedly.ngrok-free.dev']
+	},
+	build: {
+		rollupOptions: {
+			external: ['pg-native', 'cloudflare:sockets']
+		}
 	}
 });

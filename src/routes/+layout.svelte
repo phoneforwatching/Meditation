@@ -66,6 +66,13 @@
       </button>
 
       {#if $page.data.user && !isAuthPage}
+        <a
+          href="/settings/profile"
+          class="text-xl hover:scale-110 transition-transform"
+          title="Profile Settings"
+        >
+          👤
+        </a>
         <button
           on:click={logout}
           class="text-sm font-semibold transition-colors {!isDarkPage

@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { supabase } from '$lib/supabaseClient';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/schema';
+import { users, profiles, accounts } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
 import { createToken } from '$lib/server/auth';
 import { dev } from '$app/environment';
@@ -30,15 +30,56 @@ export async function POST({ request, cookies }) {
         // Create new user
         const [newUser] = await db.insert(users).values({
             email: supabaseUser.email,
-            displayName: supabaseUser.user_metadata.full_name || supabaseUser.email.split('@')[0],
-            googleId: supabaseUser.id,
+            emailVerified: new Date(),
         }).returning();
         user = newUser;
-    } else if (!user.googleId) {
-        // Link existing user
-        await db.update(users)
-            .set({ googleId: supabaseUser.id })
-            .where(eq(users.id, user.id));
+
+        // Create profile
+        await db.insert(profiles).values({
+            userId: user.id,
+            displayName: supabaseUser.user_metadata.full_name || supabaseUser.email.split('@')[0],
+            avatarUrl: supabaseUser.user_metadata.avatar_url,
+        });
+
+        // Create account
+        await db.insert(accounts).values({
+            userId: user.id,
+            provider: 'google', // Assuming Google for now, or extract from identities
+            providerAccountId: supabaseUser.id,
+            accessToken: accessToken,
+        });
+    } else {
+        // Check/Create Profile if missing
+        const existingProfile = await db.query.profiles.findFirst({
+            where: eq(profiles.userId, user.id)
+        });
+
+        if (!existingProfile) {
+            await db.insert(profiles).values({
+                userId: user.id,
+                displayName: supabaseUser.user_metadata.full_name || supabaseUser.email.split('@')[0],
+                avatarUrl: supabaseUser.user_metadata.avatar_url,
+            });
+        } else if (!existingProfile.avatarUrl && supabaseUser.user_metadata.avatar_url) {
+            // Update avatar if missing locally but available in auth
+            await db.update(profiles)
+                .set({ avatarUrl: supabaseUser.user_metadata.avatar_url })
+                .where(eq(profiles.userId, user.id));
+        }
+
+        // Check/Create Account
+        const existingAccount = await db.query.accounts.findFirst({
+            where: eq(accounts.userId, user.id)
+        });
+
+        if (!existingAccount) {
+            await db.insert(accounts).values({
+                userId: user.id,
+                provider: 'google',
+                providerAccountId: supabaseUser.id,
+                accessToken: accessToken,
+            });
+        }
     }
 
     // Create local session
