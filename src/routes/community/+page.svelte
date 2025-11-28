@@ -134,7 +134,11 @@
                   <div
                     class="mb-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-2xl shadow-sm border border-slate/10 text-xs font-medium text-slate-700 max-w-[120px] truncate relative group/note cursor-pointer hover:scale-105 transition-transform"
                     title={user.checkinCaption}
+                    role="button"
+                    tabindex="0"
                     on:click|stopPropagation={() => (viewingStory = user)}
+                    on:keydown={(e) =>
+                      e.key === "Enter" && (viewingStory = user)}
                   >
                     {user.checkinCaption}
                     <!-- Little triangle pointing down -->
@@ -400,7 +404,10 @@
     <div
       class="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4"
       transition:fade={{ duration: 200 }}
+      role="button"
+      tabindex="0"
       on:click|self={() => (viewingStory = null)}
+      on:keydown={(e) => e.key === "Escape" && (viewingStory = null)}
     >
       <button
         class="absolute top-4 right-4 text-white/60 hover:text-white text-4xl z-50"

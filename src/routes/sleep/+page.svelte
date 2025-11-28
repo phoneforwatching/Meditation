@@ -457,22 +457,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    @keyframes float {
-        0%,
-        100% {
-            transform: translate(0, 0);
-            opacity: 0.8;
-        }
-        50% {
-            transform: translate(10px, -10px);
-            opacity: 0.4;
-        }
-    }
-    .animate-float {
-        animation-name: float;
-        animation-timing-function: ease-in-out;
-        animation-iteration-count: infinite;
-    }
-</style>

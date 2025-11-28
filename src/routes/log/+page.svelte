@@ -2,6 +2,7 @@
   import { enhance } from "$app/forms";
 
   import { page } from "$app/stores";
+  import { t } from "$lib/i18n";
 
   let duration = Number($page.url.searchParams.get("duration")) || 10;
   let isAutoDuration = !!$page.url.searchParams.get("duration");
@@ -20,7 +21,9 @@
 </script>
 
 <div class="max-w-lg mx-auto py-8">
-  <h1 class="text-2xl font-bold text-sage mb-6 text-center">Log Session</h1>
+  <h1 class="text-2xl font-bold text-sage mb-6 text-center">
+    {$t("log.title")}
+  </h1>
 
   <form
     method="POST"
@@ -30,15 +33,17 @@
     <!-- Duration -->
     <div class="space-y-2">
       <label class="block text-sm font-medium text-slate" for="duration">
-        Duration (minutes)
+        {$t("log.duration")}
       </label>
       {#if isAutoDuration}
         <div class="text-3xl font-bold text-sage font-mono py-2">
           {duration}
-          <span class="text-base font-normal text-slate/60">minutes</span>
+          <span class="text-base font-normal text-slate/60"
+            >{$t("log.minutes")}</span
+          >
         </div>
         <input type="hidden" name="duration" value={duration} />
-        <p class="text-xs text-slate/60 italic">Recorded from actual session</p>
+        <p class="text-xs text-slate/60 italic">{$t("log.recorded")}</p>
       {:else}
         <div class="flex items-center gap-4">
           <input
@@ -59,18 +64,20 @@
 
     <!-- Type -->
     <fieldset class="space-y-2">
-      <legend class="block text-sm font-medium text-slate">Type</legend>
+      <legend class="block text-sm font-medium text-slate"
+        >{$t("log.type")}</legend
+      >
       <div class="flex flex-wrap gap-2">
-        {#each types as t}
+        {#each types as typeOption}
           <button
             type="button"
             class="px-3 py-1 rounded-full text-sm border transition-colors {type ===
-            t
+            typeOption
               ? 'bg-sage text-white border-sage'
               : 'bg-white text-slate border-slate/20 hover:border-sage'}"
-            on:click={() => (type = t)}
+            on:click={() => (type = typeOption)}
           >
-            {t}
+            {$t(`log.types.${typeOption}`)}
           </button>
         {/each}
         <input type="hidden" name="type" value={type} />
@@ -79,7 +86,9 @@
 
     <!-- Mood -->
     <fieldset class="space-y-2">
-      <legend class="block text-sm font-medium text-slate">Mood (After)</legend>
+      <legend class="block text-sm font-medium text-slate"
+        >{$t("log.mood")}</legend
+      >
       <div class="flex justify-between px-2">
         {#each [1, 2, 3, 4, 5] as m}
           <button
@@ -99,14 +108,14 @@
     <!-- Notes -->
     <div class="space-y-2">
       <label class="block text-sm font-medium text-slate" for="notes">
-        Notes (Optional)
+        {$t("log.notes")}
       </label>
       <textarea
         id="notes"
         name="notes"
         rows="3"
         class="w-full rounded-lg border-slate/20 focus:border-sage focus:ring-sage"
-        placeholder="How did it feel?"
+        placeholder={$t("log.placeholder")}
       ></textarea>
     </div>
 
@@ -114,11 +123,13 @@
       type="submit"
       class="w-full bg-sage hover:bg-sage/90 text-white font-bold py-3 rounded-xl shadow-md transition-transform active:scale-95"
     >
-      Save Session
+      {$t("log.save")}
     </button>
 
     <div class="text-center">
-      <a href="/" class="text-sm text-slate/50 hover:text-sage">Cancel</a>
+      <a href="/" class="text-sm text-slate/50 hover:text-sage"
+        >{$t("log.cancel")}</a
+      >
     </div>
   </form>
 </div>

@@ -4,6 +4,7 @@
 
     export let value: string; // HH:mm format
     export let label: string;
+    export let id = "timepicker-" + Math.random().toString(36).slice(2);
 
     const dispatch = createEventDispatcher();
 
@@ -53,8 +54,11 @@
 </script>
 
 <div class="relative">
-    <label class="block text-xs text-blue-200/80 ml-1 mb-1">{label}</label>
+    <label class="block text-xs text-blue-200/80 ml-1 mb-1" for={id}
+        >{label}</label
+    >
     <button
+        {id}
         type="button"
         class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-left text-lg font-mono flex items-center justify-between hover:bg-slate-800/70 transition-colors"
         on:click={toggle}
@@ -67,7 +71,13 @@
         <div
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
             transition:fade
+            role="button"
+            tabindex="0"
             on:click|self={() => (isOpen = false)}
+            on:keydown={(e) => {
+                if (e.key === "Escape" || e.key === "Enter" || e.key === " ")
+                    isOpen = false;
+            }}
         >
             <div
                 class="bg-slate-900 rounded-3xl p-6 w-full max-w-xs shadow-2xl border border-white/10"

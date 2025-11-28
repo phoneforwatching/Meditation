@@ -129,6 +129,27 @@ const translations = {
             blocked: 'Notifications are blocked. Please enable them in browser settings.',
             testTitle: 'Reminder Set!',
             testBody: 'You will be reminded daily at'
+        },
+        log: {
+            title: 'Log Session',
+            duration: 'Duration (minutes)',
+            minutes: 'minutes',
+            recorded: 'Recorded from actual session',
+            type: 'Type',
+            mood: 'Mood (After)',
+            notes: 'Notes (Optional)',
+            placeholder: 'How did it feel?',
+            save: 'Save Session',
+            cancel: 'Cancel',
+            types: {
+                Breath: 'Breath',
+                'Body Scan': 'Body Scan',
+                'Loving Kindness': 'Loving Kindness',
+                'Open Awareness': 'Open Awareness',
+                Mantra: 'Mantra',
+                Walking: 'Walking',
+                Other: 'Other'
+            }
         }
     },
     th: {
@@ -257,6 +278,27 @@ const translations = {
             blocked: 'การแจ้งเตือนถูกปิดกั้น โปรดเปิดในตั้งค่าเบราว์เซอร์',
             testTitle: 'ตั้งค่าแจ้งเตือนแล้ว!',
             testBody: 'คุณจะได้รับการแจ้งเตือนทุกวันเวลา'
+        },
+        log: {
+            title: 'บันทึกเซสชัน',
+            duration: 'ระยะเวลา (นาที)',
+            minutes: 'นาที',
+            recorded: 'บันทึกจากการทำสมาธิจริง',
+            type: 'ประเภท',
+            mood: 'อารมณ์ (หลังทำ)',
+            notes: 'บันทึกเพิ่มเติม (ไม่บังคับ)',
+            placeholder: 'รู้สึกอย่างไรบ้าง?',
+            save: 'บันทึก',
+            cancel: 'ยกเลิก',
+            types: {
+                Breath: 'อานาปานสติ',
+                'Body Scan': 'สแกนร่างกาย',
+                'Loving Kindness': 'เมตตาภาวนา',
+                'Open Awareness': 'เจริญสติรู้ตัว',
+                Mantra: 'บริกรรมมนต์',
+                Walking: 'เดินจงกรม',
+                Other: 'อื่นๆ'
+            }
         }
     }
 };
