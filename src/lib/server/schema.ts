@@ -52,6 +52,15 @@ export const nudges = pgTable('nudges', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const dailyCheckins = pgTable('daily_checkins', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id).notNull(),
+    photoUrl: text('photo_url'), // Nullable for text-only notes
+    mood: integer('mood').notNull(), // 1-5
+    caption: text('caption'),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
 export const sleepLogs = pgTable('sleep_logs', {
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => users.id).notNull(),

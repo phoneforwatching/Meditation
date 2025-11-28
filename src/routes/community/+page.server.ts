@@ -1,21 +1,45 @@
 import { db } from '$lib/server/db';
-import { users, meditationSessions, profiles } from '$lib/server/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { users, profiles, dailyCheckins } from '$lib/server/schema';
+import { desc, eq, sql, and, gte } from 'drizzle-orm';
 
 export async function load({ locals }) {
-    // Query all users and sum their duration
-    // Note: In a real large-scale app, this should be paginated or cached.
-    const leaderboard = await db.select({
+    // Get 24 hours ago timestamp
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Fetch users and profiles
+    const usersData = await db.select({
         id: users.id,
         displayName: profiles.displayName,
+        totalMinutes: profiles.dailyGoalMinutes,
         avatarUrl: profiles.avatarUrl,
-        totalMinutes: sql<number>`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`.mapWith(Number),
     })
         .from(users)
         .leftJoin(profiles, eq(users.id, profiles.userId))
-        .leftJoin(meditationSessions, eq(users.id, meditationSessions.userId))
-        .groupBy(users.id, profiles.displayName, profiles.avatarUrl)
-        .orderBy(desc(sql`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`));
+        .orderBy(desc(profiles.dailyGoalMinutes));
+
+    // Fetch active check-ins (last 24h)
+    const activeCheckins = await db.select()
+        .from(dailyCheckins)
+        .where(gte(dailyCheckins.createdAt, oneDayAgo))
+        .orderBy(desc(dailyCheckins.createdAt));
+
+    // Map latest check-in to user
+    const checkinMap = new Map();
+    for (const checkin of activeCheckins) {
+        if (!checkinMap.has(checkin.userId)) {
+            checkinMap.set(checkin.userId, checkin);
+        }
+    }
+
+    const leaderboard = usersData.map(user => {
+        const checkin = checkinMap.get(user.id);
+        return {
+            ...user,
+            checkinPhoto: checkin?.photoUrl,
+            checkinMood: checkin?.mood,
+            checkinCaption: checkin?.caption
+        };
+    });
 
     return {
         leaderboard,

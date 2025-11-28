@@ -2,7 +2,29 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { profiles } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
-import { supabaseAdmin } from '$lib/server/supabaseAdmin';
+import { getSupabaseAdmin } from '$lib/server/supabaseAdmin';
+
+const AVATAR_BUCKET = 'avatars';
+
+async function ensureAvatarBucketExists() {
+    const supabase = getSupabaseAdmin();
+
+    // Create the bucket if it's missing (idempotent on Supabase side)
+    const { data, error } = await supabase.storage.getBucket(AVATAR_BUCKET);
+    if (!error && data) {
+        return supabase;
+    }
+
+    const { error: createError } = await supabase.storage.createBucket(AVATAR_BUCKET, {
+        public: true
+    });
+
+    if (createError) {
+        throw new Error(`Failed to ensure avatar bucket: ${createError.message}`);
+    }
+
+    return supabase;
+}
 
 export async function POST({ request, locals }) {
     if (!locals.user) {
@@ -15,7 +37,9 @@ export async function POST({ request, locals }) {
         const bio = formData.get('bio') as string;
         const avatarFile = formData.get('avatar') as File;
 
-        const updateData: any = {};
+        const supabase = await ensureAvatarBucketExists();
+
+        const updateData: Record<string, string> = {};
         if (displayName) updateData.displayName = displayName;
         if (bio) updateData.bio = bio;
 
@@ -24,9 +48,9 @@ export async function POST({ request, locals }) {
             const fileName = `${locals.user.id}-${Date.now()}.${fileExt}`;
 
             // Upload to Supabase Storage
-            const { data, error } = await supabaseAdmin
+            const { data, error } = await supabase
                 .storage
-                .from('avatars')
+                .from(AVATAR_BUCKET)
                 .upload(fileName, avatarFile, {
                     contentType: avatarFile.type,
                     upsert: true
@@ -38,9 +62,9 @@ export async function POST({ request, locals }) {
             }
 
             // Get public URL
-            const { data: { publicUrl } } = supabaseAdmin
+            const { data: { publicUrl } } = supabase
                 .storage
-                .from('avatars')
+                .from(AVATAR_BUCKET)
                 .getPublicUrl(fileName);
 
             updateData.avatarUrl = publicUrl;
@@ -53,6 +77,7 @@ export async function POST({ request, locals }) {
         return json({ success: true, avatarUrl: updateData.avatarUrl });
     } catch (e) {
         console.error('Profile update error:', e);
-        return json({ error: 'Failed to update profile' }, { status: 500 });
+        const message = e instanceof Error ? e.message : 'Failed to update profile';
+        return json({ error: message }, { status: 500 });
     }
 }
