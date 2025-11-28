@@ -231,7 +231,7 @@
         class="bg-blue-100 border border-blue-200 text-slate p-4 rounded-xl flex justify-between items-center animate-bounce-short"
       >
         <div class="flex items-center gap-2">
-          <span class="text-xl">�</span>
+          <span class="text-xl">📩</span>
           <span>
             You have <strong>{unreadMessageCount}</strong> unread message{unreadMessageCount >
             1
