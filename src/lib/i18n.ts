@@ -74,6 +74,11 @@ const translations = {
             minutes: 'MINS',
             empty: 'No data yet.'
         },
+        profile: {
+            meditation: 'Meditation',
+            sleep: 'Sleep',
+            recentActivity: 'Recent Activity'
+        },
         sleep: {
             title: 'Sleep Valley',
             subtitle: 'Rest well, let the light return.',
@@ -231,6 +236,11 @@ const translations = {
             time: 'เวลาสะสม',
             minutes: 'นาที',
             empty: 'ยังไม่มีข้อมูล'
+        },
+        profile: {
+            meditation: 'การทำสมาธิ',
+            sleep: 'การนอนหลับ',
+            recentActivity: 'กิจกรรมล่าสุด'
         },
         sleep: {
             title: 'หุบเขานิทรา',

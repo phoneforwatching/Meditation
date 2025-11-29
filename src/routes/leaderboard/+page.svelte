@@ -30,7 +30,8 @@
                 {@const isMe = user.id === data.currentUserId}
                 {@const stage = getTreeStage(user.totalMinutes)}
 
-                <div
+                <a
+                    href="/profile/{user.id}"
                     class="grid grid-cols-[auto_1fr_auto] gap-4 p-4 items-center hover:bg-white/60 transition-colors {isMe
                         ? 'bg-sage/5'
                         : ''}"
@@ -94,7 +95,7 @@
                             {$t("leaderboard.minutes")}
                         </div>
                     </div>
-                </div>
+                </a>
             {/each}
 
             {#if data.leaderboard.length === 0}
