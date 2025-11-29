@@ -164,6 +164,12 @@ const translations = {
                 Walking: 'Walking',
                 Other: 'Other'
             }
+        },
+        notifications: {
+            youHave: 'You have',
+            unreadMessage: 'unread message',
+            unreadMessages: 'unread messages',
+            view: 'View'
         }
     },
     th: {
@@ -327,6 +333,12 @@ const translations = {
                 Walking: 'เดินจงกรม',
                 Other: 'อื่นๆ'
             }
+        },
+        notifications: {
+            youHave: 'คุณมี',
+            unreadMessage: 'ข้อความใหม่',
+            unreadMessages: 'ข้อความใหม่',
+            view: 'ดู'
         }
     }
 };

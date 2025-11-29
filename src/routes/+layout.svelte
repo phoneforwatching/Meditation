@@ -44,6 +44,7 @@
   let subscription: RealtimeChannel | null = null;
 
   let hasUnread = false;
+  let unreadPopupDismissed = false;
 
   $: if ($page.data.unreadMessageCount !== undefined) {
     unreadMessageCount = $page.data.unreadMessageCount;
@@ -256,21 +257,27 @@
   </nav>
 
   <main class="p-4 max-w-4xl mx-auto space-y-4 pb-24">
-    {#if unreadMessageCount > 0 && $page.url.pathname !== "/chat"}
+    {#if unreadMessageCount > 0 && $page.url.pathname !== "/chat" && !unreadPopupDismissed}
       <div
         class="bg-blue-100 border border-blue-200 text-slate p-4 rounded-xl flex justify-between items-center animate-bounce-short"
       >
         <div class="flex items-center gap-2">
           <span class="text-xl">📩</span>
           <span>
-            You have <strong>{unreadMessageCount}</strong> unread message{unreadMessageCount >
-            1
-              ? "s"
-              : ""}!
+            {$t("notifications.youHave")} <strong>{unreadMessageCount}</strong>
+            {$t(
+              unreadMessageCount > 1
+                ? "notifications.unreadMessages"
+                : "notifications.unreadMessage",
+            )}!
           </span>
         </div>
-        <a href="/chat" class="text-sm font-bold text-blue-500 hover:underline">
-          View
+        <a
+          href="/chat"
+          class="text-sm font-bold text-blue-500 hover:underline"
+          on:click={() => (unreadPopupDismissed = true)}
+        >
+          {$t("notifications.view")}
         </a>
       </div>
     {/if}
