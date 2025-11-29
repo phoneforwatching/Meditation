@@ -43,11 +43,24 @@
   let showNotifications = false;
   let subscription: RealtimeChannel | null = null;
 
+  let hasUnread = false;
+
   $: if ($page.data.unreadMessageCount !== undefined) {
     unreadMessageCount = $page.data.unreadMessageCount;
   }
   $: if ($page.data.notifications) {
     notifications = $page.data.notifications;
+    // If we have notifications on load, show the badge
+    // We could refine this to check if any are actually unread if we had that data
+    // For now, just show it if there are any, or rely on a persistent "last read" timestamp
+    // But per request "hide after click", we can just initialize to true if length > 0
+    // However, this would reset on every navigation.
+    // A better approach for "session" persistence is just local state, but it resets on reload.
+    // Let's stick to the simple request: "after click, red button disappears".
+    // We'll initialize hasUnread to true if there are notifications.
+    if (notifications.length > 0) {
+      hasUnread = true;
+    }
   }
 
   async function updateUnreadCount() {
@@ -84,6 +97,7 @@
         },
         (payload) => {
           notifications = [payload.new, ...notifications];
+          hasUnread = true; // Show badge on new notification
         },
       )
       .on(
@@ -112,6 +126,13 @@
     // For now, we assume clicking the link handles it or we add an endpoint later.
     // Actually, let's just create a simple server action or API if needed.
     // But for this step, let's just hide it.
+  }
+
+  function handleBellClick() {
+    showNotifications = !showNotifications;
+    if (showNotifications) {
+      hasUnread = false;
+    }
   }
 </script>
 
@@ -151,10 +172,10 @@
         <div class="relative">
           <button
             class="text-xl hover:scale-110 transition-transform relative"
-            on:click={() => (showNotifications = !showNotifications)}
+            on:click={handleBellClick}
           >
             🔔
-            {#if notifications.length > 0}
+            {#if notifications.length > 0 && hasUnread}
               <span
                 class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"
               ></span>
