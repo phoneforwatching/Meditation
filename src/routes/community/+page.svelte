@@ -16,6 +16,7 @@
   let checkinCaption = "";
   let isSubmitting = false;
   let viewingStory: any = null;
+  let selectedUserForAction: any = null;
 
   const MOODS: Record<number, string> = {
     1: "😫",
@@ -96,12 +97,17 @@
       class="flex flex-wrap justify-center items-end gap-x-8 gap-y-12 px-4 md:px-12 py-12 max-w-7xl mx-auto"
     >
       {#each data.leaderboard as user, i}
-        {@const stage = getTreeStage(user.totalMinutes)}
+        {@const stage = getTreeStage(user.totalMinutes || 0)}
         {@const isMe = user.id === data.currentUserId}
 
         <div
-          class="flex flex-col items-center relative group transition-all duration-500 hover:-translate-y-2"
+          class="flex flex-col items-center relative group transition-all duration-500 hover:-translate-y-2 cursor-pointer"
           in:fly={{ y: 50, duration: 500, delay: i * 30 }}
+          role="button"
+          tabindex="0"
+          on:click={() => !isMe && (selectedUserForAction = user)}
+          on:keydown={(e) =>
+            e.key === "Enter" && !isMe && (selectedUserForAction = user)}
         >
           <!-- Tree -->
           <div
@@ -163,7 +169,7 @@
               class="text-6xl filter drop-shadow-lg transition-all duration-500"
               style="font-size: {Math.max(
                 3,
-                Math.min(8, 3 + user.totalMinutes / 100),
+                Math.min(8, 3 + (user.totalMinutes || 0) / 100),
               )}rem"
             >
               {stage.symbol}
@@ -455,6 +461,117 @@
             </div>
           {/if}
         </div>
+      </div>
+    </div>
+  {/if}
+  <!-- User Action Modal -->
+  {#if selectedUserForAction}
+    <div
+      class="fixed inset-0 z-[70] bg-black/50 flex items-end sm:items-center justify-center p-4"
+      transition:fade={{ duration: 200 }}
+      role="button"
+      tabindex="0"
+      on:click|self={() => (selectedUserForAction = null)}
+      on:keydown={(e) => e.key === "Escape" && (selectedUserForAction = null)}
+    >
+      <div
+        class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 space-y-6 animate-in slide-in-from-bottom-10 fade-in duration-300"
+        role="dialog"
+        aria-modal="true"
+      >
+        <!-- Header -->
+        <div class="text-center space-y-2">
+          {#if selectedUserForAction.avatarUrl}
+            <img
+              src={selectedUserForAction.avatarUrl}
+              alt={selectedUserForAction.displayName}
+              class="w-20 h-20 rounded-full mx-auto object-cover border-4 border-sage/20"
+            />
+          {:else}
+            <div
+              class="w-20 h-20 rounded-full bg-sage/20 flex items-center justify-center text-3xl font-bold text-sage mx-auto border-4 border-sage/10"
+            >
+              {(selectedUserForAction.displayName || "A")[0].toUpperCase()}
+            </div>
+          {/if}
+          <div>
+            <h3 class="text-xl font-bold text-slate-800">
+              {selectedUserForAction.displayName || "Anonymous"}
+            </h3>
+            <p class="text-slate-500 text-sm">
+              {selectedUserForAction.totalMinutes || 0}
+              {$t("stats.minutes")} • {$t(
+                `tree.${getTreeStage(selectedUserForAction.totalMinutes || 0).id}.name`,
+              )}
+            </p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="grid grid-cols-2 gap-4">
+          {#if !nudgedUsers.has(selectedUserForAction.id)}
+            <button
+              class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
+              on:click={async () => {
+                const user = selectedUserForAction;
+                if (!user) return;
+
+                // Optimistic update
+                nudgedUsers.add(user.id);
+                nudgedUsers = nudgedUsers;
+                selectedUserForAction = null; // Close modal
+
+                import("$lib/haptics").then(({ vibrate, HAPTIC_PATTERNS }) =>
+                  vibrate(HAPTIC_PATTERNS.TAP),
+                );
+
+                const res = await fetch("/api/nudge", {
+                  method: "POST",
+                  body: JSON.stringify({ receiverId: user.id }),
+                  headers: { "Content-Type": "application/json" },
+                });
+
+                if (res.ok) {
+                  import("$lib/haptics").then(({ vibrate, HAPTIC_PATTERNS }) =>
+                    vibrate(HAPTIC_PATTERNS.SUCCESS),
+                  );
+                } else {
+                  nudgedUsers.delete(user.id);
+                  nudgedUsers = nudgedUsers;
+                  const d = await res.json();
+                  alert(d.error);
+                }
+              }}
+            >
+              <span class="text-3xl">👋</span>
+              <span class="font-bold">{$t("community.nudge")}</span>
+            </button>
+          {:else}
+            <div
+              class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-slate-50 text-slate-400 cursor-not-allowed"
+            >
+              <span class="text-3xl">👋</span>
+              <span class="font-bold">{$t("community.nudged")}</span>
+            </div>
+          {/if}
+
+          <a
+            href="/chat/{selectedUserForAction.id}"
+            class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+            on:click={() => (selectedUserForAction = null)}
+          >
+            <span class="text-3xl">💬</span>
+            <span class="font-bold">{$t("community.message")}</span>
+          </a>
+        </div>
+
+        <!-- Close -->
+        <button
+          class="w-full py-3 text-slate-400 font-medium hover:text-slate-600 transition-colors"
+          on:click={() => (selectedUserForAction = null)}
+        >
+          {$t("common.cancel")}
+        </button>
       </div>
     </div>
   {/if}
