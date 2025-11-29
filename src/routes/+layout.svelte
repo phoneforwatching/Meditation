@@ -58,7 +58,8 @@
     // A better approach for "session" persistence is just local state, but it resets on reload.
     // Let's stick to the simple request: "after click, red button disappears".
     // We'll initialize hasUnread to true if there are notifications.
-    if (notifications.length > 0) {
+    // Check if there are any unread notifications
+    if (notifications.some((n) => !n.isRead)) {
       hasUnread = true;
     }
   }
@@ -128,10 +129,18 @@
     // But for this step, let's just hide it.
   }
 
-  function handleBellClick() {
+  async function handleBellClick() {
     showNotifications = !showNotifications;
-    if (showNotifications) {
+    if (showNotifications && hasUnread) {
       hasUnread = false;
+      // Mark all as read on server
+      try {
+        await fetch("/api/notifications/read", { method: "POST" });
+        // Update local state to reflect read status
+        notifications = notifications.map((n) => ({ ...n, isRead: true }));
+      } catch (e) {
+        console.error("Failed to mark notifications as read", e);
+      }
     }
   }
 </script>
