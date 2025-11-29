@@ -4,13 +4,7 @@
   import { t } from "$lib/i18n";
   export let data;
 
-  // Podium heights for top 3
-  const PODIUM_HEIGHTS = ["h-32", "h-24", "h-20"];
-  const PODIUM_COLORS = [
-    "bg-yellow-100 border-yellow-200",
-    "bg-slate-100 border-slate-200",
-    "bg-orange-100 border-orange-200",
-  ];
+  // Podium constants removed as per redesign
 
   let nudgedUsers = new Set<number>();
 
@@ -86,45 +80,34 @@
   </div>
 
   <!-- Forest Scene Container -->
-  <div
-    class="flex-1 relative overflow-x-auto overflow-y-hidden pb-12 custom-scrollbar"
-  >
+  <div class="flex-1 relative pb-12 min-h-[60vh]">
     <!-- Sky/Background -->
     <div
       class="absolute inset-0 pointer-events-none bg-gradient-to-b from-blue-50/50 to-transparent -z-10"
     ></div>
 
-    <!-- Ground Line -->
+    <!-- Ground Gradient (Subtle) -->
     <div
-      class="absolute bottom-12 left-0 right-0 h-1 bg-earth/20 min-w-full w-max"
+      class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-earth/10 to-transparent pointer-events-none"
     ></div>
 
     <!-- Trees Container -->
     <div
-      class="flex items-end px-12 gap-8 min-w-max h-full pt-20 pb-12 mx-auto"
+      class="flex flex-wrap justify-center items-end gap-x-8 gap-y-12 px-4 md:px-12 py-12 max-w-7xl mx-auto"
     >
       {#each data.leaderboard as user, i}
         {@const stage = getTreeStage(user.totalMinutes)}
-        {@const isTop3 = i < 3}
         {@const isMe = user.id === data.currentUserId}
 
         <div
-          class="flex flex-col items-center relative group transition-all duration-300 hover:-translate-y-2"
-          in:fly={{ y: 50, duration: 500, delay: i * 50 }}
+          class="flex flex-col items-center relative group transition-all duration-500 hover:-translate-y-2"
+          in:fly={{ y: 50, duration: 500, delay: i * 30 }}
         >
-          <!-- Rank Badge (Floating) -->
-          <div
-            class="mb-4 font-bold text-slate/40 text-sm bg-white/80 px-2 py-1 rounded-full shadow-sm backdrop-blur-sm"
-          >
-            #{i + 1}
-          </div>
-
           <!-- Tree -->
           <div
             class="relative z-10 text-center transform transition-transform group-hover:scale-110"
           >
             <!-- Daily Check-in Bubble -->
-            <!-- Daily Check-in / Note Bubble -->
             {#if user.checkinPhoto || user.checkinCaption}
               <div
                 class="absolute -top-24 left-1/2 -translate-x-1/2 z-20 animate-bounce-short flex flex-col items-center"
@@ -177,7 +160,7 @@
             {/if}
 
             <div
-              class="text-6xl filter drop-shadow-lg"
+              class="text-6xl filter drop-shadow-lg transition-all duration-500"
               style="font-size: {Math.max(
                 3,
                 Math.min(8, 3 + user.totalMinutes / 100),
@@ -198,106 +181,97 @@
             </div>
           </div>
 
-          <!-- Podium / Ground Connection -->
-          {#if isTop3}
-            <div
-              class="{PODIUM_HEIGHTS[i]} w-24 {PODIUM_COLORS[
-                i
-              ]} border-t-4 border-x rounded-t-lg flex items-end justify-center pb-4 shadow-sm relative z-0 -mt-2"
-            >
-              <div class="text-3xl opacity-50">
-                {["🥇", "🥈", "🥉"][i]}
-              </div>
-            </div>
-          {:else}
-            <div class="h-4 w-1 bg-earth/20 rounded-full -mt-2"></div>
-          {/if}
-
           <!-- User Info -->
-          <div class="mt-4 text-center space-y-1">
+          <div class="mt-2 text-center space-y-1">
             <div
-              class="font-semibold text-slate text-sm flex items-center justify-center gap-2 bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm"
+              class="font-semibold text-slate text-xs flex items-center justify-center gap-1.5 bg-white/40 px-2 py-0.5 rounded-full backdrop-blur-sm transition-colors group-hover:bg-white/80"
             >
               {#if user.avatarUrl}
                 <img
                   src={user.avatarUrl}
                   alt={user.displayName}
-                  class="w-6 h-6 rounded-full object-cover border border-white/50"
+                  class="w-5 h-5 rounded-full object-cover border border-white/50"
                 />
               {:else}
                 <div
-                  class="w-6 h-6 rounded-full bg-sage/20 flex items-center justify-center text-xs border border-white/50"
+                  class="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center text-[10px] border border-white/50"
                 >
                   {(user.displayName || "A")[0].toUpperCase()}
                 </div>
               {/if}
-              <span>{user.displayName || "Anonymous"}</span>
+              <span class="max-w-[80px] truncate"
+                >{user.displayName || "Anonymous"}</span
+              >
               {#if isMe}
-                <span class="w-2 h-2 rounded-full bg-sage animate-pulse"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-sage animate-pulse"
+                ></span>
               {/if}
             </div>
 
-            <!-- Nudge Button -->
-            {#if !isMe && !nudgedUsers.has(user.id)}
-              <button
-                class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-lg hover:scale-125 active:scale-95 p-1"
-                title="{$t('community.nudge')} {user.displayName}"
-                on:click={async (e) => {
-                  const btn = e.currentTarget;
-                  // Optimistic update
-                  nudgedUsers.add(user.id);
-                  nudgedUsers = nudgedUsers; // Trigger reactivity
-
-                  import("$lib/haptics").then(({ vibrate, HAPTIC_PATTERNS }) =>
-                    vibrate(HAPTIC_PATTERNS.TAP),
-                  );
-
-                  const res = await fetch("/api/nudge", {
-                    method: "POST",
-                    body: JSON.stringify({ receiverId: user.id }),
-                    headers: { "Content-Type": "application/json" },
-                  });
-
-                  if (res.ok) {
-                    import("$lib/haptics").then(
-                      ({ vibrate, HAPTIC_PATTERNS }) =>
-                        vibrate(HAPTIC_PATTERNS.SUCCESS),
-                    );
-                  } else {
-                    // Revert on failure
-                    nudgedUsers.delete(user.id);
-                    nudgedUsers = nudgedUsers;
+            <!-- Actions (Only visible on hover/focus to keep forest clean) -->
+            <div
+              class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              {#if !isMe && !nudgedUsers.has(user.id)}
+                <button
+                  class="text-lg hover:scale-125 active:scale-95 transition-transform"
+                  title="{$t('community.nudge')} {user.displayName}"
+                  on:click={async (e) => {
+                    const btn = e.currentTarget;
+                    // Optimistic update
+                    nudgedUsers.add(user.id);
+                    nudgedUsers = nudgedUsers; // Trigger reactivity
 
                     import("$lib/haptics").then(
                       ({ vibrate, HAPTIC_PATTERNS }) =>
-                        vibrate(HAPTIC_PATTERNS.WARNING),
+                        vibrate(HAPTIC_PATTERNS.TAP),
                     );
-                    const d = await res.json();
-                    alert(d.error);
-                  }
-                }}
-              >
-                👋
-              </button>
-            {/if}
 
-            {#if !isMe}
-              <a
-                href="/chat/{user.id}"
-                class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-lg hover:scale-125 active:scale-95 p-1 inline-block ml-2"
-                title="Message {user.displayName}"
-              >
-                💬
-              </a>
-            {/if}
+                    const res = await fetch("/api/nudge", {
+                      method: "POST",
+                      body: JSON.stringify({ receiverId: user.id }),
+                      headers: { "Content-Type": "application/json" },
+                    });
+
+                    if (res.ok) {
+                      import("$lib/haptics").then(
+                        ({ vibrate, HAPTIC_PATTERNS }) =>
+                          vibrate(HAPTIC_PATTERNS.SUCCESS),
+                      );
+                    } else {
+                      // Revert on failure
+                      nudgedUsers.delete(user.id);
+                      nudgedUsers = nudgedUsers;
+
+                      import("$lib/haptics").then(
+                        ({ vibrate, HAPTIC_PATTERNS }) =>
+                          vibrate(HAPTIC_PATTERNS.WARNING),
+                      );
+                      const d = await res.json();
+                      alert(d.error);
+                    }
+                  }}
+                >
+                  👋
+                </button>
+              {/if}
+
+              {#if !isMe}
+                <a
+                  href="/chat/{user.id}"
+                  class="text-lg hover:scale-125 active:scale-95 transition-transform"
+                  title="Message {user.displayName}"
+                >
+                  💬
+                </a>
+              {/if}
+            </div>
           </div>
         </div>
       {/each}
 
       {#if data.leaderboard.length === 0}
-        <div
-          class="absolute inset-0 flex items-center justify-center text-slate/40 text-lg"
-        >
+        <div class="w-full text-center text-slate/40 text-lg py-20">
           {$t("community.empty")}
         </div>
       {/if}

@@ -318,6 +318,19 @@
             <span class="text-xs font-medium">{$t("nav.community")}</span>
           </a>
 
+          <!-- Leaderboard -->
+          <a
+            href="/leaderboard"
+            class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
+              '/leaderboard',
+              isDarkPage,
+              $page.url.pathname,
+            )}"
+          >
+            <span class="text-2xl">🏆</span>
+            <span class="text-xs font-medium">{$t("nav.leaderboard")}</span>
+          </a>
+
           <!-- Sleep -->
           <a
             href="/sleep"

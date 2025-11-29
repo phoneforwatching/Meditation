@@ -10,6 +10,7 @@ const translations = {
             sleep: 'Sleep',
             stats: 'Stats',
             chat: 'Chat',
+            leaderboard: 'Rank',
             hello: 'Hello',
             logout: 'Logout'
         },
@@ -64,6 +65,14 @@ const translations = {
             mood: 'How are you feeling?',
             photo: 'Take a photo',
             justNow: 'Just now'
+        },
+        leaderboard: {
+            title: 'Leaderboard',
+            subtitle: 'Top meditators by total time.',
+            user: 'User',
+            time: 'Total Time',
+            minutes: 'MINS',
+            empty: 'No data yet.'
         },
         sleep: {
             title: 'Sleep Valley',
@@ -159,6 +168,7 @@ const translations = {
             sleep: 'นอนหลับ',
             stats: 'สถิติ',
             chat: 'แชท',
+            leaderboard: 'อันดับ',
             hello: 'สวัสดี',
             logout: 'ออกจากระบบ'
         },
@@ -213,6 +223,14 @@ const translations = {
             mood: 'คุณรู้สึกอย่างไร?',
             photo: 'ถ่ายรูป',
             justNow: 'เมื่อสักครู่'
+        },
+        leaderboard: {
+            title: 'อันดับผู้ฝึกฝน',
+            subtitle: 'ผู้ที่มีเวลาทำสมาธิสะสมสูงสุด',
+            user: 'ผู้ใช้งาน',
+            time: 'เวลาสะสม',
+            minutes: 'นาที',
+            empty: 'ยังไม่มีข้อมูล'
         },
         sleep: {
             title: 'หุบเขานิทรา',
