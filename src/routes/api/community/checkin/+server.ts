@@ -5,7 +5,9 @@ import { getSupabaseAdmin } from '$lib/server/supabaseAdmin';
 import { broadcastNotification } from '$lib/server/notifications';
 import { eq } from 'drizzle-orm';
 
-export async function POST({ request, locals }) {
+import type { RequestEvent } from './$types';
+
+export async function POST({ request, locals }: RequestEvent) {
     if (!locals.user) {
         return json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -79,8 +81,8 @@ export async function POST({ request, locals }) {
         );
 
         return json({ success: true });
-    } catch (e) {
+    } catch (e: any) {
         console.error('Check-in error:', e);
-        return json({ error: 'Failed to check in' }, { status: 500 });
+        return json({ error: e.message || 'Failed to check in' }, { status: 500 });
     }
 }

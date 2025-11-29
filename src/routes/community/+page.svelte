@@ -34,11 +34,75 @@
     5: "border-green-400",
   };
 
-  function handlePhotoSelect(e: Event) {
+  async function compressImage(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("No 2d context"));
+          return;
+        }
+
+        // Max dimensions
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const newFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(newFile);
+            } else {
+              reject(new Error("Canvas to Blob failed"));
+            }
+          },
+          "image/jpeg",
+          0.8,
+        ); // 0.8 quality
+      };
+      img.onerror = (e) => reject(e);
+    });
+  }
+
+  async function handlePhotoSelect(e: Event) {
     const input = e.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      checkinPhoto = input.files[0];
-      checkinPhotoPreview = URL.createObjectURL(checkinPhoto);
+      try {
+        const originalFile = input.files[0];
+        // Show preview immediately with original
+        checkinPhotoPreview = URL.createObjectURL(originalFile);
+
+        // Compress in background
+        checkinPhoto = await compressImage(originalFile);
+      } catch (err) {
+        console.error("Compression failed", err);
+        // Fallback to original if compression fails
+        checkinPhoto = input.files[0];
+      }
     }
   }
 
