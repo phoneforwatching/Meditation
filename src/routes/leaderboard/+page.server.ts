@@ -7,12 +7,12 @@ export async function load({ locals }) {
     const leaderboard = await db.select({
         id: users.id,
         displayName: profiles.displayName,
-        totalMinutes: profiles.dailyGoalMinutes,
+        totalMinutes: profiles.totalMinutes,
         avatarUrl: profiles.avatarUrl,
     })
         .from(users)
         .leftJoin(profiles, eq(users.id, profiles.userId))
-        .orderBy(desc(profiles.dailyGoalMinutes));
+        .orderBy(desc(profiles.totalMinutes));
 
     return {
         leaderboard,

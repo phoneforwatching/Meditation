@@ -20,6 +20,7 @@ export const profiles = pgTable('profiles', {
     bio: text('bio'),
     timezone: text('timezone').default('UTC'),
     dailyGoalMinutes: integer('daily_goal_minutes').default(10),
+    totalMinutes: integer('total_minutes').default(0),
 });
 
 export const accounts = pgTable('accounts', {

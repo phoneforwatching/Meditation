@@ -10,12 +10,12 @@ export async function load({ locals }) {
     const usersData = await db.select({
         id: users.id,
         displayName: profiles.displayName,
-        totalMinutes: profiles.dailyGoalMinutes,
+        totalMinutes: profiles.totalMinutes,
         avatarUrl: profiles.avatarUrl,
     })
         .from(users)
         .leftJoin(profiles, eq(users.id, profiles.userId))
-        .orderBy(desc(profiles.dailyGoalMinutes));
+        .orderBy(desc(profiles.totalMinutes));
 
     // Fetch active check-ins (last 24h)
     const activeCheckins = await db.select()

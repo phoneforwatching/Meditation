@@ -26,6 +26,17 @@ export const actions = {
             notes,
         });
 
+        // Update total minutes
+        const [currentProfile] = await db.select({ totalMinutes: profiles.totalMinutes })
+            .from(profiles)
+            .where(eq(profiles.userId, locals.user.id));
+
+        const newTotal = (currentProfile?.totalMinutes || 0) + duration;
+
+        await db.update(profiles)
+            .set({ totalMinutes: newTotal })
+            .where(eq(profiles.userId, locals.user.id));
+
         // Broadcast Notification
         const [userProfile] = await db.select({ displayName: profiles.displayName })
             .from(profiles)
