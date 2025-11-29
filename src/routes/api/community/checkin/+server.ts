@@ -28,17 +28,20 @@ export async function POST({ request, locals }) {
 
             const supabaseAdmin = getSupabaseAdmin();
 
+            const arrayBuffer = await photo.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
             const { error: uploadError } = await supabaseAdmin
                 .storage
                 .from('daily-checkins')
-                .upload(fileName, photo, {
+                .upload(fileName, buffer, {
                     contentType: photo.type,
                     upsert: true
                 });
 
             if (uploadError) {
                 console.error('Supabase upload error:', uploadError);
-                throw new Error('Failed to upload image');
+                throw new Error(`Failed to upload image: ${uploadError.message}`);
             }
 
             const { data } = supabaseAdmin
