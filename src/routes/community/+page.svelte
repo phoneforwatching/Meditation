@@ -34,6 +34,20 @@
     5: "border-green-400",
   };
 
+  function resetCheckinForm() {
+    checkinPhoto = null;
+    checkinPhotoPreview = null;
+    checkinMood = 3;
+    checkinCaption = "";
+    isSubmitting = false;
+    console.log("Check-in form reset");
+  }
+
+  function closeCheckinModal() {
+    showCheckinModal = false;
+    resetCheckinForm();
+  }
+
   async function compressImage(file: File): Promise<File> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -71,10 +85,18 @@
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              const newFile = new File([blob], file.name, {
+              // Use .jpg extension for JPEG files
+              const fileName = file.name.replace(/\.[^/.]+$/, ".jpg");
+              const newFile = new File([blob], fileName, {
                 type: "image/jpeg",
                 lastModified: Date.now(),
               });
+              console.log(
+                "Compressed image:",
+                newFile.name,
+                newFile.size,
+                "bytes",
+              );
               resolve(newFile);
             } else {
               reject(new Error("Canvas to Blob failed"));
@@ -93,15 +115,23 @@
     if (input.files && input.files[0]) {
       try {
         const originalFile = input.files[0];
+        console.log(
+          "Original file selected:",
+          originalFile.name,
+          originalFile.size,
+          "bytes",
+        );
         // Show preview immediately with original
         checkinPhotoPreview = URL.createObjectURL(originalFile);
 
         // Compress in background
         checkinPhoto = await compressImage(originalFile);
+        console.log("Compression successful");
       } catch (err) {
         console.error("Compression failed", err);
         // Fallback to original if compression fails
         checkinPhoto = input.files[0];
+        console.log("Using original file as fallback");
       }
     }
   }
@@ -109,6 +139,14 @@
   async function submitCheckin() {
     if (!checkinPhoto && !checkinCaption) return;
     isSubmitting = true;
+
+    console.log("Submitting check-in...", {
+      hasPhoto: !!checkinPhoto,
+      photoName: checkinPhoto?.name,
+      photoSize: checkinPhoto?.size,
+      mood: checkinMood,
+      caption: checkinCaption,
+    });
 
     const formData = new FormData();
     if (checkinPhoto) {
@@ -124,14 +162,21 @@
       });
 
       if (res.ok) {
-        showCheckinModal = false;
+        console.log("Check-in posted successfully!");
+        closeCheckinModal();
         window.location.reload(); // Refresh to see new check-in
       } else {
-        alert("Failed to post check-in");
+        const errorData = await res
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        console.error("Server error:", errorData);
+        alert(`Failed to post check-in: ${errorData.error || "Unknown error"}`);
       }
     } catch (e) {
-      console.error(e);
-      alert("Error posting check-in");
+      console.error("Network error:", e);
+      alert(
+        `Error posting check-in: ${e instanceof Error ? e.message : "Unknown error"}`,
+      );
     } finally {
       isSubmitting = false;
     }
@@ -366,7 +411,7 @@
       <div class="bg-white rounded-2xl p-6 w-full max-w-md space-y-6 relative">
         <button
           class="absolute top-4 right-4 text-slate/40 hover:text-slate"
-          on:click={() => (showCheckinModal = false)}
+          on:click={closeCheckinModal}
         >
           ✕
         </button>

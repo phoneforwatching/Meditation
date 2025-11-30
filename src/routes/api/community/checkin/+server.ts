@@ -18,13 +18,25 @@ export async function POST({ request, locals }: RequestEvent) {
         const mood = Number(formData.get('mood'));
         const caption = formData.get('caption') as string;
 
+        console.log('Check-in request received:', {
+            userId: locals.user.id,
+            hasPhoto: !!photo,
+            photoName: photo?.name,
+            photoSize: photo?.size,
+            photoType: photo?.type,
+            mood,
+            caption: caption?.substring(0, 50)
+        });
+
         if ((!photo || photo.size === 0) && !caption) {
+            console.log('Rejected: No photo or caption provided');
             return json({ error: 'Must provide either photo or caption' }, { status: 400 });
         }
 
         // Upload to Supabase Storage (if photo exists)
         let publicUrl = null;
         if (photo && photo.size > 0) {
+            console.log('Starting photo upload...');
             const fileExt = photo.name.split('.').pop();
             const fileName = `${locals.user.id}-${Date.now()}.${fileExt}`;
 
@@ -32,6 +44,7 @@ export async function POST({ request, locals }: RequestEvent) {
 
             const arrayBuffer = await photo.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
+            console.log(`Uploading ${fileName} (${buffer.length} bytes)...`);
 
             const { error: uploadError } = await supabaseAdmin
                 .storage
@@ -52,15 +65,18 @@ export async function POST({ request, locals }: RequestEvent) {
                 .getPublicUrl(fileName);
 
             publicUrl = data.publicUrl;
+            console.log('Upload successful, public URL:', publicUrl);
         }
 
         // Save to DB
+        console.log('Saving to database...');
         await db.insert(dailyCheckins).values({
             userId: locals.user.id,
             photoUrl: publicUrl,
             mood,
             caption
         });
+        console.log('Database insert successful');
 
         // Broadcast Notification
         const [userProfile] = await db.select({ displayName: profiles.displayName })
@@ -80,6 +96,7 @@ export async function POST({ request, locals }: RequestEvent) {
             '/community'
         );
 
+        console.log('Check-in completed successfully');
         return json({ success: true });
     } catch (e: any) {
         console.error('Check-in error:', e);
