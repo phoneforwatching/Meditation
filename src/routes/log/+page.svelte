@@ -12,6 +12,8 @@
   let type = "Breath";
   let mood = 3;
 
+  let loading = false;
+
   $: if (durationParam) {
     duration = Number(durationParam);
   }
@@ -38,7 +40,13 @@
 
   <form
     method="POST"
-    use:enhance
+    use:enhance={() => {
+      loading = true;
+      return async ({ update }) => {
+        await update();
+        loading = false;
+      };
+    }}
     class="bg-white p-8 rounded-2xl shadow-sm border border-earth/10 space-y-6"
   >
     <!-- Duration -->
@@ -132,9 +140,10 @@
 
     <button
       type="submit"
-      class="w-full bg-sage hover:bg-sage/90 text-white font-bold py-3 rounded-xl shadow-md transition-transform active:scale-95"
+      disabled={loading}
+      class="w-full bg-sage hover:bg-sage/90 text-white font-bold py-3 rounded-xl shadow-md transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {$t("log.save")}
+      {loading ? $t("log.saving") : $t("log.save")}
     </button>
 
     <div class="text-center">

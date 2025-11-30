@@ -14,7 +14,12 @@ export function getSupabaseAdmin(): SupabaseClient {
 
     const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceRoleKey) {
-        throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+        // Log available keys to help debug (don't log values)
+        console.error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+        console.error('Available private env keys:', Object.keys(env).filter(k => !k.includes('KEY') && !k.includes('SECRET') && !k.includes('PASSWORD')));
+        console.error('All available env keys (masked):', Object.keys(env));
+
+        throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured. Please add it to your environment variables (e.g. Vercel Project Settings).');
     }
 
     cachedClient = createClient(PUBLIC_SUPABASE_URL, serviceRoleKey, {
