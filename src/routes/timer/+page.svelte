@@ -4,13 +4,28 @@
   import { vibrate, HAPTIC_PATTERNS } from "$lib/haptics";
   import { t } from "$lib/i18n";
 
+  // Music options
+  const musicOptions = [
+    { id: "none", name: "เงียบ", icon: "🔇", file: null },
+    {
+      id: "relaxing",
+      name: "ผ่อนคลาย",
+      icon: "🎵",
+      file: "/music/relaxing.mp3",
+    },
+    { id: "forest", name: "ป่า", icon: "🌳", file: "/music/forest.mp3" },
+    { id: "rain", name: "ฝน", icon: "🌧️", file: "/music/rain.mp3" },
+    { id: "ocean", name: "คลื่น", icon: "🌊", file: "/music/ocean.mp3" },
+    { id: "lofi", name: "Lofi", icon: "🎧", file: "/music/lofi.mp3" },
+  ];
+
+  let selectedMusic = "relaxing";
   let durationMinutes = 10;
   let timeLeft = durationMinutes * 60;
   let isRunning = false;
   let isPaused = false;
   let interval: any;
   let completed = false;
-  // Audio context will be initialized on first interaction
 
   function formatTime(seconds: number) {
     const m = Math.floor(seconds / 60);
@@ -19,22 +34,62 @@
   }
 
   let audio: HTMLAudioElement;
-  let bgMusic: HTMLAudioElement;
+  let bgMusic: HTMLAudioElement | null = null;
+  let previewAudio: HTMLAudioElement | null = null;
+  let isPreviewPlaying = false;
+
+  function selectMusic(musicId: string) {
+    // Stop preview if playing
+    stopPreview();
+    selectedMusic = musicId;
+    localStorage.setItem("meditationMusic", musicId);
+  }
+
+  function togglePreview() {
+    const musicOption = musicOptions.find((m) => m.id === selectedMusic);
+
+    if (isPreviewPlaying && previewAudio) {
+      stopPreview();
+    } else if (musicOption && musicOption.file) {
+      previewAudio = new Audio(musicOption.file);
+      previewAudio.volume = 0.5;
+      previewAudio.play().catch((e) => console.log("Preview failed", e));
+      isPreviewPlaying = true;
+
+      // Auto stop after 10 seconds
+      setTimeout(() => {
+        stopPreview();
+      }, 10000);
+    }
+  }
+
+  function stopPreview() {
+    if (previewAudio) {
+      previewAudio.pause();
+      previewAudio.currentTime = 0;
+      previewAudio = null;
+    }
+    isPreviewPlaying = false;
+  }
 
   onMount(() => {
+    // Load saved music preference
+    const savedMusic = localStorage.getItem("meditationMusic");
+    if (savedMusic && musicOptions.find((m) => m.id === savedMusic)) {
+      selectedMusic = savedMusic;
+    }
+
+    // Load bell sound
     audio = new Audio("/bell.mp3");
     audio.load();
-
-    bgMusic = new Audio(
-      "/Relaxing music Relieves stress Anxiety and Depression  Heals the Mind body and Soul - Deep Sleep.mp3",
-    );
-    bgMusic.loop = true;
-    bgMusic.load();
   });
 
   let endTime: number;
 
   function startTimer() {
+    // Stop preview if playing
+    stopPreview();
+
     vibrate(HAPTIC_PATTERNS.TAP);
 
     // iOS Unlock: Play and pause immediately on user interaction
@@ -50,7 +105,11 @@
         .catch((e) => console.log("Audio unlock failed", e));
     }
 
-    if (bgMusic) {
+    // Load and play background music if selected
+    const musicOption = musicOptions.find((m) => m.id === selectedMusic);
+    if (musicOption && musicOption.file) {
+      bgMusic = new Audio(musicOption.file);
+      bgMusic.loop = true;
       bgMusic
         .play()
         .catch((e) => console.log("Background music play failed", e));
@@ -192,6 +251,46 @@
             </button>
           {/each}
         </div>
+      </fieldset>
+
+      <!-- Music Picker -->
+      <fieldset class="space-y-2">
+        <legend class="block text-sm font-medium text-slate">
+          🎵 เพลงประกอบ
+        </legend>
+        <div class="flex flex-wrap gap-2 justify-center">
+          {#each musicOptions as music}
+            <button
+              on:click={() => selectMusic(music.id)}
+              class="flex flex-col items-center px-3 py-2 rounded-xl border-2 transition-all min-w-[60px]
+                {selectedMusic === music.id
+                ? 'border-sage bg-sage/10 shadow-sm'
+                : 'border-earth/20 hover:border-sage/50 hover:bg-sage/5'}"
+            >
+              <span class="text-xl">{music.icon}</span>
+              <span class="text-xs text-slate/70 mt-1">{music.name}</span>
+            </button>
+          {/each}
+        </div>
+
+        <!-- Preview Button -->
+        {#if selectedMusic !== "none"}
+          <button
+            on:click={togglePreview}
+            class="mt-3 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm transition-all mx-auto
+              {isPreviewPlaying
+              ? 'bg-red-100 text-red-600 hover:bg-red-200'
+              : 'bg-sage/10 text-sage hover:bg-sage/20'}"
+          >
+            {#if isPreviewPlaying}
+              <span>⏹️</span>
+              <span>หยุดฟัง</span>
+            {:else}
+              <span>▶️</span>
+              <span>ฟังตัวอย่าง</span>
+            {/if}
+          </button>
+        {/if}
       </fieldset>
 
       <div class="space-y-2">
