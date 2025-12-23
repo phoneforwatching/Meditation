@@ -165,7 +165,11 @@
         ? 'text-sage'
         : 'text-blue-200'}"
     >
-      <img src="/logo.png" alt="Logo" class="w-8 h-8 object-contain" />
+      <img
+        src="/icon-192.png"
+        alt="Logo"
+        class="w-8 h-8 object-contain rounded-lg"
+      />
       {$t("nav.tree")}
     </a>
     <div class="flex items-center gap-4">
