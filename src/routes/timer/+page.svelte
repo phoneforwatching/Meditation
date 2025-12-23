@@ -16,7 +16,6 @@
     { id: "forest", name: "ป่า", icon: "🌳", file: "/music/forest.mp3" },
     { id: "rain", name: "ฝน", icon: "🌧️", file: "/music/rain.mp3" },
     { id: "ocean", name: "คลื่น", icon: "🌊", file: "/music/ocean.mp3" },
-    { id: "lofi", name: "Lofi", icon: "🎧", file: "/music/lofi.mp3" },
   ];
 
   let selectedMusic = "relaxing";
