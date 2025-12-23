@@ -3,6 +3,12 @@
   import { enhance } from "$app/forms";
   import { t, locale } from "$lib/i18n";
 
+  // shadcn components
+  import { Button } from "$lib/components/ui/button";
+  import * as Card from "$lib/components/ui/card";
+  import { Progress } from "$lib/components/ui/progress";
+  import { Badge } from "$lib/components/ui/badge";
+
   import type { AchievementStatus } from "$lib/achievements";
   import type { PageData } from "./$types";
 
@@ -10,7 +16,6 @@
 
   $: stage = getTreeStage(data.totalMinutes);
   $: nextStage = getTreeStage(stage.maxMinutes + 1);
-  // Handle max stage (Infinity)
   $: isMaxStage = stage.maxMinutes === Infinity;
   $: progressPercent = isMaxStage
     ? 100
@@ -46,12 +51,10 @@
     const lastDay = new Date(year, month + 1, 0);
     const days = [];
 
-    // Add empty slots for days before first day of month
     for (let i = 0; i < firstDay.getDay(); i++) {
       days.push(null);
     }
 
-    // Add days of month
     for (let i = 1; i <= lastDay.getDate(); i++) {
       days.push(new Date(year, month, i));
     }
@@ -69,61 +72,86 @@
 <div class="max-w-2xl mx-auto space-y-8">
   <!-- Hero Section -->
   <div class="text-center space-y-4 py-8">
-    <div class="inline-block p-4 rounded-full bg-sage/10 mb-4">
-      <span class="text-6xl">{stage.symbol}</span>
+    <!-- Tree Symbol with Glow -->
+    <div class="relative inline-block">
+      <div
+        class="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-breathe"
+      ></div>
+      <div
+        class="relative inline-block p-6 rounded-full bg-primary/10 border border-primary/20 shadow-soft"
+      >
+        <span class="text-7xl block animate-pulse-soft">{stage.symbol}</span>
+      </div>
     </div>
-    <h1 class="text-4xl font-bold text-sage">{$t(`tree.${stage.id}.name`)}</h1>
-    <p class="text-slate/60 max-w-md mx-auto">{$t(`tree.${stage.id}.desc`)}</p>
+
+    <h1 class="text-4xl font-bold text-primary">
+      {$t(`tree.${stage.id}.name`)}
+    </h1>
+    <p class="text-muted-foreground max-w-md mx-auto">
+      {$t(`tree.${stage.id}.desc`)}
+    </p>
 
     {#if !isMaxStage}
-      <div
-        class="w-full bg-earth/20 rounded-full h-4 mt-4 overflow-hidden relative max-w-md mx-auto"
-      >
-        <div
-          class="bg-sage h-full rounded-full transition-all duration-1000 ease-out"
-          style="width: {progressPercent}%"
-        ></div>
+      <div class="max-w-md mx-auto space-y-2 mt-4">
+        <Progress value={progressPercent} class="h-3" />
+        <p class="text-sm text-muted-foreground">
+          <span class="font-semibold text-primary">{data.totalMinutes}</span> / {stage.maxMinutes +
+            1}
+          {$t("dashboard.untilNext")}
+          <span class="font-medium">{$t(`tree.${nextStage.id}.name`)}</span>
+        </p>
       </div>
-      <p class="text-sm text-slate/60 mt-2">
-        {data.totalMinutes} / {stage.maxMinutes + 1}
-        {$t("dashboard.untilNext")}
-        {$t(`tree.${nextStage.id}.name`)}
-      </p>
     {:else}
-      <p class="text-sage font-bold mt-4">{$t("dashboard.maxLevel")}</p>
+      <Badge variant="default" class="mt-4 text-sm">
+        🏆 {$t("dashboard.maxLevel")}
+      </Badge>
     {/if}
 
-    <div class="grid grid-cols-3 gap-4 max-w-md mx-auto mt-8">
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-earth/10">
-        <div class="text-2xl font-bold text-sage">{data.streak}</div>
-        <div class="text-xs text-slate/50 uppercase tracking-wider">
-          {$t("dashboard.streak")}
-        </div>
-      </div>
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-earth/10">
-        <div class="text-2xl font-bold text-sage">{data.totalMinutes}</div>
-        <div class="text-xs text-slate/50 uppercase tracking-wider">
-          {$t("dashboard.totalMinutes")}
-        </div>
-      </div>
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-earth/10">
-        <div class="text-2xl font-bold text-sage">{data.totalSessions}</div>
-        <div class="text-xs text-slate/50 uppercase tracking-wider">
-          {$t("dashboard.sessions")}
-        </div>
-      </div>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-3 gap-3 max-w-md mx-auto mt-8">
+      <Card.Root class="glass shadow-soft border-border/50 overflow-hidden">
+        <Card.Content class="p-4 text-center">
+          <div class="text-2xl font-bold text-primary">{data.streak}</div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wider">
+            🔥 {$t("dashboard.streak")}
+          </div>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root class="glass shadow-soft border-border/50 overflow-hidden">
+        <Card.Content class="p-4 text-center">
+          <div class="text-2xl font-bold text-primary">{data.totalMinutes}</div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wider">
+            ⏱️ {$t("dashboard.totalMinutes")}
+          </div>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root class="glass shadow-soft border-border/50 overflow-hidden">
+        <Card.Content class="p-4 text-center">
+          <div class="text-2xl font-bold text-primary">
+            {data.totalSessions}
+          </div>
+          <div class="text-xs text-muted-foreground uppercase tracking-wider">
+            🧘 {$t("dashboard.sessions")}
+          </div>
+        </Card.Content>
+      </Card.Root>
     </div>
   </div>
 
   <!-- Actions -->
   <div class="grid grid-cols-1 gap-4 max-w-md mx-auto">
-    <a
-      href="/timer"
-      class="bg-sage hover:bg-sage/90 text-white text-lg font-semibold py-4 px-8 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 flex items-center gap-2"
+    <Button
+      asChild
+      size="lg"
+      class="h-14 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
     >
-      <span>⏱️</span>
-      {$t("dashboard.startTimer")}
-    </a>
+      <a href="/timer" class="flex items-center gap-2">
+        <span>⏱️</span>
+        {$t("dashboard.startTimer")}
+      </a>
+    </Button>
   </div>
 
   <!-- Achievements -->

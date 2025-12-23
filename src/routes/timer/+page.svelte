@@ -1,8 +1,14 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { fade, fly } from "svelte/transition";
+  import { fade, scale } from "svelte/transition";
   import { vibrate, HAPTIC_PATTERNS } from "$lib/haptics";
   import { t } from "$lib/i18n";
+
+  // shadcn components
+  import { Button } from "$lib/components/ui/button";
+  import * as Card from "$lib/components/ui/card";
+  import { Progress } from "$lib/components/ui/progress";
+  import { Badge } from "$lib/components/ui/badge";
 
   // Music options
   const musicOptions = [
@@ -16,6 +22,15 @@
     { id: "forest", name: "ป่า", icon: "🌳", file: "/music/forest.mp3" },
     { id: "rain", name: "ฝน", icon: "🌧️", file: "/music/rain.mp3" },
     { id: "ocean", name: "คลื่น", icon: "🌊", file: "/music/ocean.mp3" },
+  ];
+
+  // Duration presets
+  const durationPresets = [
+    { value: 5, label: "5", emoji: "🌱" },
+    { value: 10, label: "10", emoji: "🌿" },
+    { value: 15, label: "15", emoji: "🌲" },
+    { value: 20, label: "20", emoji: "🌳" },
+    { value: 30, label: "30", emoji: "🏔️" },
   ];
 
   let selectedMusic = "relaxing";
@@ -38,7 +53,6 @@
   let isPreviewPlaying = false;
 
   function selectMusic(musicId: string) {
-    // Stop preview if playing
     stopPreview();
     selectedMusic = musicId;
     localStorage.setItem("meditationMusic", musicId);
@@ -46,7 +60,6 @@
 
   function togglePreview() {
     const musicOption = musicOptions.find((m) => m.id === selectedMusic);
-
     if (isPreviewPlaying && previewAudio) {
       stopPreview();
     } else if (musicOption && musicOption.file) {
@@ -54,11 +67,7 @@
       previewAudio.volume = 0.5;
       previewAudio.play().catch((e) => console.log("Preview failed", e));
       isPreviewPlaying = true;
-
-      // Auto stop after 10 seconds
-      setTimeout(() => {
-        stopPreview();
-      }, 10000);
+      setTimeout(() => stopPreview(), 10000);
     }
   }
 
@@ -72,13 +81,10 @@
   }
 
   onMount(() => {
-    // Load saved music preference
     const savedMusic = localStorage.getItem("meditationMusic");
     if (savedMusic && musicOptions.find((m) => m.id === savedMusic)) {
       selectedMusic = savedMusic;
     }
-
-    // Load bell sound
     audio = new Audio("/bell.mp3");
     audio.load();
   });
@@ -86,12 +92,9 @@
   let endTime: number;
 
   function startTimer() {
-    // Stop preview if playing
     stopPreview();
-
     vibrate(HAPTIC_PATTERNS.TAP);
 
-    // iOS Unlock: Play and pause immediately on user interaction
     if (audio) {
       audio.volume = 0;
       audio
@@ -104,7 +107,6 @@
         .catch((e) => console.log("Audio unlock failed", e));
     }
 
-    // Load and play background music if selected
     const musicOption = musicOptions.find((m) => m.id === selectedMusic);
     if (musicOption && musicOption.file) {
       bgMusic = new Audio(musicOption.file);
@@ -115,11 +117,9 @@
     }
 
     if (!isRunning) {
-      // Start new timer
       timeLeft = durationMinutes * 60;
       endTime = Date.now() + timeLeft * 1000;
     } else {
-      // Resume
       endTime = Date.now() + timeLeft * 1000;
     }
 
@@ -130,27 +130,24 @@
     interval = setInterval(() => {
       const now = Date.now();
       const remaining = Math.ceil((endTime - now) / 1000);
-
       if (remaining > 0) {
         timeLeft = remaining;
       } else {
         timeLeft = 0;
         finishTimer();
       }
-    }, 100); // Check more frequently for smoothness
+    }, 100);
   }
 
   function pauseTimer() {
     vibrate(HAPTIC_PATTERNS.TAP);
     isPaused = true;
     clearInterval(interval);
-    if (bgMusic) {
-      bgMusic.pause();
-    }
+    if (bgMusic) bgMusic.pause();
   }
 
   function resumeTimer() {
-    startTimer(); // Reuse startTimer logic which handles resume
+    startTimer();
   }
 
   function stopTimer() {
@@ -205,7 +202,6 @@
   });
 
   function handleLogClick() {
-    // Stop all audio before navigating
     if (bgMusic) {
       bgMusic.pause();
       bgMusic.currentTime = 0;
@@ -223,209 +219,307 @@
 </script>
 
 <div
-  class="max-w-lg mx-auto py-12 text-center space-y-8 {isShaking
+  class="max-w-lg mx-auto py-8 text-center space-y-6 {isShaking
     ? 'animate-shake'
     : ''}"
 >
   {#if !isRunning && !completed}
-    <div class="space-y-6" in:fade>
-      <h1 class="text-3xl font-bold text-sage">{$t("timer.ready")}</h1>
-
-      <!-- Preset Timer Buttons -->
-      <fieldset class="space-y-2">
-        <legend class="block text-sm font-medium text-slate">
-          {$t("timer.quickStart")}
-        </legend>
-        <div class="flex flex-wrap gap-2 justify-center">
-          {#each [5, 10, 15, 20, 30] as preset}
-            <button
-              on:click={() => (durationMinutes = preset)}
-              class="px-4 py-2 rounded-full border-2 transition-all {durationMinutes ===
-              preset
-                ? 'border-sage bg-sage text-white'
-                : 'border-sage/30 text-sage hover:border-sage/60 hover:bg-sage/5'}"
-            >
-              {preset}
-              {$t("timer.minutes")}
-            </button>
-          {/each}
-        </div>
-      </fieldset>
-
-      <!-- Music Picker -->
-      <fieldset class="space-y-2">
-        <legend class="block text-sm font-medium text-slate">
-          🎵 เพลงประกอบ
-        </legend>
-        <div class="flex flex-wrap gap-2 justify-center">
-          {#each musicOptions as music}
-            <button
-              on:click={() => selectMusic(music.id)}
-              class="flex flex-col items-center px-3 py-2 rounded-xl border-2 transition-all min-w-[60px]
-                {selectedMusic === music.id
-                ? 'border-sage bg-sage/10 shadow-sm'
-                : 'border-earth/20 hover:border-sage/50 hover:bg-sage/5'}"
-            >
-              <span class="text-xl">{music.icon}</span>
-              <span class="text-xs text-slate/70 mt-1">{music.name}</span>
-            </button>
-          {/each}
-        </div>
-
-        <!-- Preview Button -->
-        {#if selectedMusic !== "none"}
-          <button
-            on:click={togglePreview}
-            class="mt-3 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm transition-all mx-auto
-              {isPreviewPlaying
-              ? 'bg-red-100 text-red-600 hover:bg-red-200'
-              : 'bg-sage/10 text-sage hover:bg-sage/20'}"
-          >
-            {#if isPreviewPlaying}
-              <span>⏹️</span>
-              <span>หยุดฟัง</span>
-            {:else}
-              <span>▶️</span>
-              <span>ฟังตัวอย่าง</span>
-            {/if}
-          </button>
-        {/if}
-      </fieldset>
-
+    <!-- Setup Screen -->
+    <div class="space-y-8" in:fade={{ duration: 300 }}>
+      <!-- Header -->
       <div class="space-y-2">
-        <label
-          class="block text-sm font-medium text-slate"
-          for="durationMinutes"
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2"
         >
-          {$t("timer.duration")}
-        </label>
-        <div class="flex items-center justify-center gap-4">
-          <button
-            class="p-2 rounded-full hover:bg-earth/10 text-2xl w-10 h-10 flex items-center justify-center text-sage"
-            on:click={() =>
-              (durationMinutes = Math.max(1, durationMinutes - 1))}>-</button
-          >
-          <input
-            id="durationMinutes"
-            type="number"
-            bind:value={durationMinutes}
-            min="1"
-            max="999"
-            class="text-4xl font-mono font-bold text-sage w-24 text-center bg-transparent border-b-2 border-sage/20 focus:border-sage focus:outline-none"
-          />
-          <button
-            class="p-2 rounded-full hover:bg-earth/10 text-2xl w-10 h-10 flex items-center justify-center text-sage"
-            on:click={() =>
-              (durationMinutes = Math.min(999, durationMinutes + 1))}>+</button
-          >
+          <span class="text-3xl">🧘</span>
         </div>
+        <h1 class="text-3xl font-bold text-primary">{$t("timer.ready")}</h1>
+        <p class="text-muted-foreground">เลือกระยะเวลาและเริ่มนั่งสมาธิ</p>
       </div>
 
-      <button
-        on:click={startTimer}
-        class="bg-sage hover:bg-sage/90 text-white text-xl font-semibold py-4 px-12 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95"
+      <!-- Duration Card -->
+      <Card.Root class="glass shadow-soft border-border/50">
+        <Card.Header class="pb-3">
+          <Card.Title class="text-lg flex items-center gap-2">
+            <span>⏱️</span>
+            {$t("timer.quickStart")}
+          </Card.Title>
+        </Card.Header>
+        <Card.Content class="space-y-4">
+          <!-- Preset Buttons -->
+          <div class="flex flex-wrap gap-2 justify-center">
+            {#each durationPresets as preset}
+              <Button
+                variant={durationMinutes === preset.value
+                  ? "default"
+                  : "outline"}
+                class="rounded-full min-w-[70px] transition-all {durationMinutes ===
+                preset.value
+                  ? 'scale-105 shadow-md'
+                  : ''}"
+                onclick={() => (durationMinutes = preset.value)}
+              >
+                <span class="mr-1">{preset.emoji}</span>
+                {preset.label}m
+              </Button>
+            {/each}
+          </div>
+
+          <!-- Custom Duration -->
+          <div class="flex items-center justify-center gap-4 pt-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              class="rounded-full h-10 w-10 text-xl"
+              onclick={() =>
+                (durationMinutes = Math.max(1, durationMinutes - 1))}
+            >
+              −
+            </Button>
+            <div class="text-center">
+              <input
+                type="number"
+                bind:value={durationMinutes}
+                min="1"
+                max="999"
+                class="text-4xl font-mono font-bold text-primary w-20 text-center bg-transparent border-b-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+              />
+              <div class="text-xs text-muted-foreground mt-1">นาที</div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="rounded-full h-10 w-10 text-xl"
+              onclick={() =>
+                (durationMinutes = Math.min(999, durationMinutes + 1))}
+            >
+              +
+            </Button>
+          </div>
+        </Card.Content>
+      </Card.Root>
+
+      <!-- Music Card -->
+      <Card.Root class="glass shadow-soft border-border/50">
+        <Card.Header class="pb-3">
+          <Card.Title class="text-lg flex items-center gap-2">
+            <span>🎵</span>
+            เพลงประกอบ
+          </Card.Title>
+        </Card.Header>
+        <Card.Content class="space-y-4">
+          <div class="flex flex-wrap gap-2 justify-center">
+            {#each musicOptions as music}
+              <button
+                onclick={() => selectMusic(music.id)}
+                class="flex flex-col items-center px-4 py-3 rounded-2xl border-2 transition-all min-w-[72px]
+                  {selectedMusic === music.id
+                  ? 'border-primary bg-primary/10 shadow-sm scale-105'
+                  : 'border-border hover:border-primary/50 hover:bg-primary/5'}"
+              >
+                <span class="text-2xl mb-1">{music.icon}</span>
+                <span class="text-xs text-muted-foreground">{music.name}</span>
+              </button>
+            {/each}
+          </div>
+
+          {#if selectedMusic !== "none"}
+            <Button
+              variant="ghost"
+              class="mt-2 text-sm {isPreviewPlaying
+                ? 'text-destructive'
+                : 'text-primary'}"
+              onclick={togglePreview}
+            >
+              {#if isPreviewPlaying}
+                <span class="mr-1">⏹️</span> หยุดฟัง
+              {:else}
+                <span class="mr-1">▶️</span> ฟังตัวอย่าง
+              {/if}
+            </Button>
+          {/if}
+        </Card.Content>
+      </Card.Root>
+
+      <!-- Start Button -->
+      <Button
+        size="lg"
+        class="w-full max-w-xs h-14 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+        onclick={startTimer}
       >
+        <span class="mr-2">🧘</span>
         {$t("timer.start")}
-      </button>
+      </Button>
     </div>
   {:else if completed}
-    <div class="space-y-6" in:fade>
-      <div class="text-6xl mb-4">✨</div>
-      <h1 class="text-3xl font-bold text-sage">{$t("timer.complete")}</h1>
-      <p class="text-slate/60">{$t("timer.notice")}</p>
-
-      <div class="flex flex-col gap-3 max-w-xs mx-auto">
-        <a
-          href="/log?duration={durationMinutes}&type=Breath"
-          on:click={handleLogClick}
-          class="bg-sage hover:bg-sage/90 text-white font-bold py-3 px-6 rounded-xl shadow-md"
-        >
-          {$t("timer.log")}
-        </a>
-        <button
-          on:click={() => {
-            completed = false;
-            stopTimer();
-          }}
-          class="text-slate/60 hover:text-sage"
-        >
-          {$t("timer.back")}
-        </button>
+    <!-- Completion Screen -->
+    <div class="space-y-6" in:scale={{ duration: 400, start: 0.9 }}>
+      <div class="relative">
+        <div class="text-8xl mb-4 animate-pulse-soft">✨</div>
+        <div
+          class="absolute inset-0 bg-primary/5 rounded-full blur-3xl -z-10"
+        ></div>
       </div>
+
+      <div class="space-y-2">
+        <h1 class="text-3xl font-bold text-primary">{$t("timer.complete")}</h1>
+        <p class="text-muted-foreground">{$t("timer.notice")}</p>
+      </div>
+
+      <Card.Root class="glass shadow-soft">
+        <Card.Content class="pt-6">
+          <div class="flex justify-center gap-4 mb-4">
+            <div class="text-center">
+              <div class="text-3xl font-bold text-primary">
+                {durationMinutes}
+              </div>
+              <div class="text-xs text-muted-foreground">นาที</div>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            <Button asChild size="lg" class="rounded-xl">
+              <a
+                href="/log?duration={durationMinutes}&type=Breath"
+                onclick={handleLogClick}
+              >
+                <span class="mr-2">📝</span>
+                {$t("timer.log")}
+              </a>
+            </Button>
+            <Button
+              variant="ghost"
+              onclick={() => {
+                completed = false;
+                stopTimer();
+              }}
+            >
+              {$t("timer.back")}
+            </Button>
+          </div>
+        </Card.Content>
+      </Card.Root>
     </div>
   {:else}
-    <div class="space-y-8 relative" in:fade>
+    <!-- Timer Running Screen -->
+    <div class="space-y-8" in:fade={{ duration: 300 }}>
       <!-- Timer Circle -->
-      <div class="relative w-64 h-64 mx-auto flex items-center justify-center">
-        <svg class="w-full h-full transform -rotate-90">
+      <div class="relative w-72 h-72 mx-auto flex items-center justify-center">
+        <!-- Outer glow -->
+        <div
+          class="absolute inset-0 rounded-full bg-primary/10 blur-2xl animate-breathe"
+        ></div>
+
+        <!-- SVG Circle -->
+        <svg class="w-full h-full transform -rotate-90 relative z-10">
           <circle
-            cx="128"
-            cy="128"
-            r="120"
+            cx="144"
+            cy="144"
+            r="130"
             stroke="currentColor"
-            stroke-width="8"
+            stroke-width="6"
             fill="transparent"
-            class="text-earth/20"
+            class="text-border"
           />
           <circle
-            cx="128"
-            cy="128"
-            r="120"
+            cx="144"
+            cy="144"
+            r="130"
             stroke="currentColor"
             stroke-width="8"
             fill="transparent"
-            stroke-dasharray={2 * Math.PI * 120}
-            stroke-dashoffset={2 * Math.PI * 120 * (1 - progress / 100)}
-            class="text-sage transition-all duration-1000 ease-linear"
+            stroke-dasharray={2 * Math.PI * 130}
+            stroke-dashoffset={2 * Math.PI * 130 * (1 - progress / 100)}
+            stroke-linecap="round"
+            class="text-primary transition-all duration-500 ease-linear"
           />
         </svg>
-        <div class="absolute inset-0 flex items-center justify-center flex-col">
-          <div class="text-5xl font-mono font-bold text-slate">
+
+        <!-- Timer Display -->
+        <div
+          class="absolute inset-0 flex items-center justify-center flex-col z-20"
+        >
+          <div
+            class="text-5xl font-mono font-bold text-foreground tracking-tight"
+          >
             {formatTime(timeLeft)}
           </div>
-          <div class="text-sm text-slate/50 mt-2">
-            {isPaused ? $t("timer.paused") : $t("timer.breathing")}
-          </div>
+          <Badge variant="secondary" class="mt-3">
+            {isPaused
+              ? "⏸️ " + $t("timer.paused")
+              : "🧘 " + $t("timer.breathing")}
+          </Badge>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="px-4">
+        <Progress value={progress} class="h-2" />
+        <div class="flex justify-between text-xs text-muted-foreground mt-2">
+          <span>0:00</span>
+          <span>{formatTime(durationMinutes * 60)}</span>
         </div>
       </div>
 
       <!-- Controls -->
       <div class="flex justify-center gap-4">
         {#if isPaused}
-          <button
-            on:click={resumeTimer}
-            class="bg-sage text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition"
+          <Button
+            size="lg"
+            class="w-16 h-16 rounded-full text-2xl shadow-lg"
+            onclick={resumeTimer}
           >
             ▶
-          </button>
+          </Button>
         {:else}
-          <button
-            on:click={pauseTimer}
-            class="bg-earth/20 text-slate w-16 h-16 rounded-full flex items-center justify-center text-2xl hover:bg-earth/30 transition"
+          <Button
+            variant="secondary"
+            size="lg"
+            class="w-16 h-16 rounded-full text-2xl"
+            onclick={pauseTimer}
           >
             ⏸
-          </button>
+          </Button>
         {/if}
 
-        <button
-          on:click={stopTimer}
-          class="border-2 border-slate/20 text-slate/60 w-16 h-16 rounded-full flex items-center justify-center text-xl hover:border-red-400 hover:text-red-400 transition"
+        <Button
+          variant="outline"
+          size="lg"
+          class="w-16 h-16 rounded-full text-xl border-2 hover:border-destructive hover:text-destructive"
+          onclick={stopTimer}
         >
           ✕
-        </button>
+        </Button>
       </div>
 
-      <div class="text-center">
-        <a
-          href="/log?duration={Math.ceil(
-            (durationMinutes * 60 - timeLeft) / 60,
-          )}&type=Breath"
-          on:click={handleLogClick}
-          class="text-sm text-slate/40 hover:text-sage"
-        >
-          {$t("timer.finishEarly")}
-        </a>
-      </div>
+      <!-- Finish Early Link -->
+      <a
+        href="/log?duration={Math.ceil(
+          (durationMinutes * 60 - timeLeft) / 60,
+        )}&type=Breath"
+        onclick={handleLogClick}
+        class="text-sm text-muted-foreground hover:text-primary transition-colors"
+      >
+        {$t("timer.finishEarly")}
+      </a>
     </div>
   {/if}
 </div>
+
+<style>
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-5px);
+    }
+    75% {
+      transform: translateX(5px);
+    }
+  }
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+</style>
