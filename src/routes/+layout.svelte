@@ -169,14 +169,6 @@
       {$t("nav.tree")}
     </a>
     <div class="flex items-center gap-4">
-      <button
-        on:click={toggleLanguage}
-        class="text-xl hover:scale-110 transition-transform"
-        title="Switch Language"
-      >
-        {$locale === "en" ? "🇹🇭" : "🇬🇧"}
-      </button>
-
       {#if $page.data.user && !isAuthPage}
         <!-- Notification Bell -->
         <div class="relative">
@@ -345,19 +337,6 @@
           >
             <span class="text-2xl">🏆</span>
             <span class="text-xs font-medium">{$t("nav.leaderboard")}</span>
-          </a>
-
-          <!-- Sleep -->
-          <a
-            href="/sleep"
-            class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
-              '/sleep',
-              isDarkPage,
-              $page.url.pathname,
-            )}"
-          >
-            <span class="text-2xl">🌙</span>
-            <span class="text-xs font-medium">{$t("nav.sleep")}</span>
           </a>
 
           <!-- Chat -->

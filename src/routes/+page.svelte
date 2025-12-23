@@ -2,7 +2,7 @@
   import { getTreeStage } from "$lib/tree";
   import { enhance } from "$app/forms";
   import { t, locale } from "$lib/i18n";
-  import DailyReminder from "$lib/components/DailyReminder.svelte";
+
   import type { AchievementStatus } from "$lib/achievements";
   import type { PageData } from "./$types";
 
@@ -124,7 +124,6 @@
       <span>⏱️</span>
       {$t("dashboard.startTimer")}
     </a>
-    <DailyReminder />
   </div>
 
   <!-- Achievements -->

@@ -55,61 +55,31 @@
         </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-2 gap-4">
+    <!-- Stats -->
+    <div class="max-w-md mx-auto w-full">
         <!-- Meditation Stats -->
         <div
-            class="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-white shadow-sm space-y-2"
+            class="bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-white shadow-sm space-y-4"
         >
-            <h3 class="font-bold text-sage flex items-center gap-2">
+            <h3 class="font-bold text-sage flex items-center gap-2 text-lg">
                 <span>🧘</span>
                 {$t("profile.meditation")}
             </h3>
-            <div class="grid grid-cols-2 gap-2 text-center">
-                <div class="bg-sage/10 rounded-xl p-2">
-                    <div class="text-xl font-bold text-sage">
+            <div class="grid grid-cols-2 gap-4 text-center">
+                <div class="bg-sage/10 rounded-xl p-4">
+                    <div class="text-2xl font-bold text-sage">
                         {meditationStats.totalSessions}
                     </div>
-                    <div class="text-[10px] text-slate/60 uppercase">
+                    <div class="text-xs text-slate/50 uppercase tracking-wider">
                         {$t("stats.sessions")}
                     </div>
                 </div>
-                <div class="bg-sage/10 rounded-xl p-2">
-                    <div class="text-xl font-bold text-sage">
+                <div class="bg-sage/10 rounded-xl p-4">
+                    <div class="text-2xl font-bold text-sage">
                         {profile.totalMinutes}
                     </div>
-                    <div class="text-[10px] text-slate/60 uppercase">
+                    <div class="text-xs text-slate/50 uppercase tracking-wider">
                         {$t("stats.minutes")}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sleep Stats -->
-        <div
-            class="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-white shadow-sm space-y-2"
-        >
-            <h3 class="font-bold text-blue-500 flex items-center gap-2">
-                <span>🌙</span>
-                {$t("profile.sleep")}
-            </h3>
-            <div class="grid grid-cols-2 gap-2 text-center">
-                <div class="bg-blue-500/10 rounded-xl p-2">
-                    <div class="text-xl font-bold text-blue-600">
-                        {formatDuration(sleepStats.avgDuration)}
-                    </div>
-                    <div class="text-[10px] text-slate/60 uppercase">
-                        {$t("sleep.avgSleep")}
-                    </div>
-                </div>
-                <div class="bg-blue-500/10 rounded-xl p-2">
-                    <div class="text-xl font-bold text-blue-600">
-                        {sleepStats.avgQuality > 0
-                            ? sleepStats.avgQuality.toFixed(1)
-                            : "-"}
-                    </div>
-                    <div class="text-[10px] text-slate/60 uppercase">
-                        {$t("sleep.quality")}
                     </div>
                 </div>
             </div>

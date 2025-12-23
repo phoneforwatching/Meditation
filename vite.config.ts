@@ -9,7 +9,7 @@ export default defineConfig({
 	],
 	server: {
 		port: 5174,
-		https: true,
+		https: {},
 		allowedHosts: ['erna-colourational-suffusedly.ngrok-free.dev']
 	},
 	build: {
