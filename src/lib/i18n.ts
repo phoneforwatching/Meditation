@@ -41,7 +41,9 @@ const translations = {
             breathing: 'Breathing...',
             finishEarly: 'Finish Early & Log',
             quickStart: 'Quick Start',
-            minutes: 'min'
+            minutes: 'min',
+            unlimited: 'Unlimited',
+            finishAndLog: 'Finish & Log Session'
         },
         stats: {
             progress: 'Your Progress',
@@ -210,7 +212,9 @@ const translations = {
             breathing: 'กำลังหายใจ...',
             finishEarly: 'เสร็จก่อนเวลา & บันทึก',
             quickStart: 'เริ่มด่วน',
-            minutes: 'นาที'
+            minutes: 'นาที',
+            unlimited: 'ไม่จำกัดเวลา',
+            finishAndLog: 'เสร็จสิ้นและบันทึกผล'
         },
         stats: {
             progress: 'ความก้าวหน้าของคุณ',

@@ -35,11 +35,14 @@
 
   let selectedMusic = "relaxing";
   let durationMinutes = 10;
+  let isUnlimited = false;
   let timeLeft = durationMinutes * 60;
+  let elapsedSeconds = 0;
   let isRunning = false;
   let isPaused = false;
   let interval: any;
   let completed = false;
+  let startTime: number;
 
   function formatTime(seconds: number) {
     const m = Math.floor(seconds / 60);
@@ -117,10 +120,19 @@
     }
 
     if (!isRunning) {
-      timeLeft = durationMinutes * 60;
-      endTime = Date.now() + timeLeft * 1000;
+      if (isUnlimited) {
+        elapsedSeconds = 0;
+        startTime = Date.now();
+      } else {
+        timeLeft = durationMinutes * 60;
+        endTime = Date.now() + timeLeft * 1000;
+      }
     } else {
-      endTime = Date.now() + timeLeft * 1000;
+      if (isUnlimited) {
+        startTime = Date.now() - elapsedSeconds * 1000;
+      } else {
+        endTime = Date.now() + timeLeft * 1000;
+      }
     }
 
     isRunning = true;
@@ -129,12 +141,16 @@
 
     interval = setInterval(() => {
       const now = Date.now();
-      const remaining = Math.ceil((endTime - now) / 1000);
-      if (remaining > 0) {
-        timeLeft = remaining;
+      if (isUnlimited) {
+        elapsedSeconds = Math.floor((now - startTime) / 1000);
       } else {
-        timeLeft = 0;
-        finishTimer();
+        const remaining = Math.ceil((endTime - now) / 1000);
+        if (remaining > 0) {
+          timeLeft = remaining;
+        } else {
+          timeLeft = 0;
+          finishTimer();
+        }
       }
     }, 100);
   }
@@ -155,7 +171,11 @@
     clearInterval(interval);
     isRunning = false;
     isPaused = false;
-    timeLeft = durationMinutes * 60;
+    if (isUnlimited) {
+      elapsedSeconds = 0;
+    } else {
+      timeLeft = durationMinutes * 60;
+    }
     if (bgMusic) {
       bgMusic.pause();
       bgMusic.currentTime = 0;
@@ -173,6 +193,9 @@
     clearInterval(interval);
     completed = true;
     isRunning = false;
+    if (isUnlimited) {
+      durationMinutes = Math.ceil(elapsedSeconds / 60);
+    }
     vibrate(HAPTIC_PATTERNS.TIMER_COMPLETE);
     triggerShake();
     playSound();
@@ -214,7 +237,9 @@
 
   $: progress =
     isRunning || isPaused
-      ? ((durationMinutes * 60 - timeLeft) / (durationMinutes * 60)) * 100
+      ? isUnlimited
+        ? 100
+        : ((durationMinutes * 60 - timeLeft) / (durationMinutes * 60)) * 100
       : 0;
 </script>
 
@@ -250,23 +275,40 @@
           <div class="flex flex-wrap gap-2 justify-center">
             {#each durationPresets as preset}
               <Button
-                variant={durationMinutes === preset.value
+                variant={!isUnlimited && durationMinutes === preset.value
                   ? "default"
                   : "outline"}
-                class="rounded-full min-w-[70px] transition-all {durationMinutes ===
-                preset.value
+                class="rounded-full min-w-[70px] transition-all {!isUnlimited &&
+                durationMinutes === preset.value
                   ? 'scale-105 shadow-md'
                   : ''}"
-                onclick={() => (durationMinutes = preset.value)}
+                onclick={() => {
+                  durationMinutes = preset.value;
+                  isUnlimited = false;
+                }}
               >
                 <span class="mr-1">{preset.emoji}</span>
                 {preset.label}m
               </Button>
             {/each}
+            <Button
+              variant={isUnlimited ? "default" : "outline"}
+              class="rounded-full min-w-[70px] transition-all {isUnlimited
+                ? 'scale-105 shadow-md'
+                : ''}"
+              onclick={() => (isUnlimited = true)}
+            >
+              <span class="mr-1">♾️</span>
+              {$t("timer.unlimited")}
+            </Button>
           </div>
 
           <!-- Custom Duration -->
-          <div class="flex items-center justify-center gap-4 pt-2">
+          <div
+            class="flex items-center justify-center gap-4 pt-2 transition-opacity {isUnlimited
+              ? 'opacity-30 pointer-events-none'
+              : ''}"
+          >
             <Button
               variant="ghost"
               size="icon"
@@ -442,7 +484,7 @@
           <div
             class="text-5xl font-mono font-bold text-foreground tracking-tight"
           >
-            {formatTime(timeLeft)}
+            {isUnlimited ? formatTime(elapsedSeconds) : formatTime(timeLeft)}
           </div>
           <Badge variant="secondary" class="mt-3">
             {isPaused
@@ -454,10 +496,23 @@
 
       <!-- Progress Bar -->
       <div class="px-4">
-        <Progress value={progress} class="h-2" />
+        {#if isUnlimited}
+          <div class="h-2 w-full bg-primary/20 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-primary animate-pulse"
+              style="width: 100%"
+            ></div>
+          </div>
+        {:else}
+          <Progress value={progress} class="h-2" />
+        {/if}
         <div class="flex justify-between text-xs text-muted-foreground mt-2">
           <span>0:00</span>
-          <span>{formatTime(durationMinutes * 60)}</span>
+          {#if isUnlimited}
+            <span>∞</span>
+          {:else}
+            <span>{formatTime(durationMinutes * 60)}</span>
+          {/if}
         </div>
       </div>
 
@@ -493,15 +548,24 @@
       </div>
 
       <!-- Finish Early Link -->
-      <a
-        href="/log?duration={Math.ceil(
-          (durationMinutes * 60 - timeLeft) / 60,
-        )}&type=Breath"
-        onclick={handleLogClick}
-        class="text-sm text-muted-foreground hover:text-primary transition-colors"
-      >
-        {$t("timer.finishEarly")}
-      </a>
+      {#if !isUnlimited}
+        <a
+          href="/log?duration={Math.ceil(
+            (durationMinutes * 60 - timeLeft) / 60,
+          )}&type=Breath"
+          onclick={handleLogClick}
+          class="text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          {$t("timer.finishEarly")}
+        </a>
+      {:else}
+        <button
+          onclick={finishTimer}
+          class="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
+        >
+          {$t("timer.finishAndLog")}
+        </button>
+      {/if}
     </div>
   {/if}
 </div>
