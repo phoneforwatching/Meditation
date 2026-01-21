@@ -12,7 +12,7 @@ const config = {
 			// Edge functions for faster global response
 			runtime: 'nodejs22.x',
 			regions: ['sin1'], // Singapore for Thai users
-			split: true, // Split functions for better cold start
+			split: false, // Split functions for better cold start
 		}),
 		// Preload for faster navigation
 		prerender: {
