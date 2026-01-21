@@ -80,7 +80,14 @@
     }
   }
 
+  let loading = true;
+
   onMount(() => {
+    // Simulate branding/loading time
+    setTimeout(() => {
+      loading = false;
+    }, 2000);
+
     // Subscribe to Supabase Realtime
     const userId = $page.data.user?.id;
     if (!userId) return;
@@ -148,6 +155,41 @@
     }
   }
 </script>
+
+{#if loading}
+  <div
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-sage/10 via-cream to-peach/10 backdrop-blur-xl transition-all duration-700 pointer-events-none"
+    style="opacity: {loading ? 1 : 0}"
+  >
+    <div
+      class="relative flex flex-col items-center animate-in zoom-in-95 duration-1000 fade-in"
+    >
+      <!-- Pulsing Glows -->
+      <div
+        class="absolute inset-0 bg-sage/20 rounded-full blur-3xl animate-pulse"
+      ></div>
+
+      <!-- Icon -->
+      <div
+        class="relative z-10 text-8xl mb-6 animate-bounce-short drop-shadow-2xl"
+      >
+        🌳
+      </div>
+
+      <!-- Text -->
+      <h1
+        class="text-4xl font-bold text-sage tracking-[0.2em] animate-pulse drop-shadow-sm"
+      >
+        BREATHE
+      </h1>
+      <p
+        class="text-slate/40 text-xs tracking-[0.3em] mt-3 uppercase font-medium"
+      >
+        Mindfulness Journey
+      </p>
+    </div>
+  </div>
+{/if}
 
 <div
   class="min-h-screen font-sans transition-colors duration-300"
