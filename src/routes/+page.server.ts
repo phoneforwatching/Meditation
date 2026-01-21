@@ -1,7 +1,7 @@
 import { evaluateAchievements } from '$lib/achievements';
 import { db } from '$lib/server/db';
 import { meditationSessions } from '$lib/server/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { redirect, fail } from '@sveltejs/kit';
 
 export async function load({ locals }) {
@@ -9,32 +9,71 @@ export async function load({ locals }) {
         throw redirect(302, '/login');
     }
 
-    const sessions = await db.select()
-        .from(meditationSessions)
-        .where(eq(meditationSessions.userId, locals.user.id))
-        .orderBy(desc(meditationSessions.completedAt));
+    const userId = locals.user.id;
 
-    const totalMinutes = sessions.reduce((acc, s) => acc + s.durationMinutes, 0);
-    const totalSessions = sessions.length;
+    const [
+        totals,
+        dailyRows,
+        typeRows,
+        recentSessions
+    ] = await Promise.all([
+        db.select({
+            totalMinutes: sql<number>`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`,
+            totalSessions: sql<number>`COUNT(*)`,
+        })
+            .from(meditationSessions)
+            .where(eq(meditationSessions.userId, userId)),
+        db.select({
+            day: sql<string>`DATE(${meditationSessions.completedAt})`,
+            minutes: sql<number>`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`
+        })
+            .from(meditationSessions)
+            .where(eq(meditationSessions.userId, userId))
+            .groupBy(sql`DATE(${meditationSessions.completedAt})`)
+            .orderBy(sql`DATE(${meditationSessions.completedAt}) DESC`),
+        db.select({
+            sessionType: meditationSessions.sessionType,
+            count: sql<number>`COUNT(*)`,
+        })
+            .from(meditationSessions)
+            .where(eq(meditationSessions.userId, userId))
+            .groupBy(meditationSessions.sessionType),
+        db.select()
+            .from(meditationSessions)
+            .where(eq(meditationSessions.userId, userId))
+            .orderBy(desc(meditationSessions.completedAt))
+            .limit(5)
+    ]);
+
+    const formatDateKey = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const normalizeDay = (value: string | Date) => {
+        if (typeof value === 'string') return value;
+        return formatDateKey(value);
+    };
+
+    const totalMinutes = Number(totals[0]?.totalMinutes ?? 0);
+    const totalSessions = Number(totals[0]?.totalSessions ?? 0);
 
     // Simple streak calculation
     let streak = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const sessionDates = new Set(sessions.map(s => {
-        if (!s.completedAt) return '';
-        const d = new Date(s.completedAt);
-        return d.toISOString().split('T')[0];
-    }));
+    const sessionDates = new Set(dailyRows.map(row => normalizeDay(row.day)));
 
     let currentCheck = new Date(today);
-    const todayStr = currentCheck.toISOString().split('T')[0];
+    const todayStr = formatDateKey(currentCheck);
 
     if (sessionDates.has(todayStr)) {
         // Meditated today
         while (true) {
-            const dateStr = currentCheck.toISOString().split('T')[0];
+            const dateStr = formatDateKey(currentCheck);
             if (sessionDates.has(dateStr)) {
                 streak++;
                 currentCheck.setDate(currentCheck.getDate() - 1);
@@ -46,12 +85,12 @@ export async function load({ locals }) {
         // Check yesterday
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = formatDateKey(yesterday);
 
         if (sessionDates.has(yesterdayStr)) {
             currentCheck = yesterday;
             while (true) {
-                const dateStr = currentCheck.toISOString().split('T')[0];
+                const dateStr = formatDateKey(currentCheck);
                 if (sessionDates.has(dateStr)) {
                     streak++;
                     currentCheck.setDate(currentCheck.getDate() - 1);
@@ -66,16 +105,17 @@ export async function load({ locals }) {
 
     // Group by type
     const typeDistribution: Record<string, number> = {};
-    sessions.forEach(s => {
-        typeDistribution[s.sessionType] = (typeDistribution[s.sessionType] || 0) + 1;
+    typeRows.forEach(row => {
+        if (!row.sessionType) return;
+        typeDistribution[row.sessionType] = Number(row.count ?? 0);
     });
 
     // Group by day for all history
     const dailyMinutes: Record<string, number> = {};
-    sessions.forEach(s => {
-        if (!s.completedAt) return;
-        const date = new Date(s.completedAt).toISOString().split('T')[0];
-        dailyMinutes[date] = (dailyMinutes[date] || 0) + s.durationMinutes;
+    dailyRows.forEach(row => {
+        const dayKey = normalizeDay(row.day);
+        if (!dayKey) return;
+        dailyMinutes[dayKey] = Number(row.minutes ?? 0);
     });
 
     return {
@@ -83,8 +123,7 @@ export async function load({ locals }) {
         totalMinutes,
         totalSessions,
         streak,
-        recentSessions: sessions.slice(0, 5),
-        allSessions: sessions, // Send all sessions for heatmap
+        recentSessions,
         typeDistribution,
         dailyMinutes,
         achievements: evaluateAchievements({

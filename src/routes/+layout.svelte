@@ -38,7 +38,9 @@
   import { onMount, onDestroy } from "svelte";
   import { supabase } from "$lib/supabaseClient";
 
+  const MAX_NOTIFICATIONS = 20;
   let unreadMessageCount = 0;
+  let unreadNotificationCount = 0;
   let notifications: any[] = [];
   let showNotifications = false;
   let subscription: RealtimeChannel | null = null;
@@ -49,21 +51,14 @@
   $: if ($page.data.unreadMessageCount !== undefined) {
     unreadMessageCount = $page.data.unreadMessageCount;
   }
+  $: if ($page.data.unreadNotificationCount !== undefined) {
+    unreadNotificationCount = $page.data.unreadNotificationCount;
+  }
   $: if ($page.data.notifications) {
     notifications = $page.data.notifications;
-    // If we have notifications on load, show the badge
-    // We could refine this to check if any are actually unread if we had that data
-    // For now, just show it if there are any, or rely on a persistent "last read" timestamp
-    // But per request "hide after click", we can just initialize to true if length > 0
-    // However, this would reset on every navigation.
-    // A better approach for "session" persistence is just local state, but it resets on reload.
-    // Let's stick to the simple request: "after click, red button disappears".
-    // We'll initialize hasUnread to true if there are notifications.
-    // Check if there are any unread notifications
-    if (notifications.some((n) => !n.isRead)) {
-      hasUnread = true;
-    }
   }
+  $: hasUnread =
+    unreadNotificationCount > 0 || notifications.some((n) => !n.isRead);
 
   async function updateUnreadCount() {
     if ($page.data.user) {
@@ -87,19 +82,25 @@
 
   onMount(() => {
     // Subscribe to Supabase Realtime
+    const userId = $page.data.user?.id;
+    if (!userId) return;
+
     subscription = supabase
-      .channel(`notifications:${$page.data.user?.id}`)
+      .channel(`notifications:${userId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${$page.data.user?.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          notifications = [payload.new, ...notifications];
-          hasUnread = true; // Show badge on new notification
+          notifications = [payload.new, ...notifications].slice(
+            0,
+            MAX_NOTIFICATIONS,
+          );
+          unreadNotificationCount += 1;
         },
       )
       .on(
@@ -108,7 +109,7 @@
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `receiver_id=eq.${$page.data.user?.id}`,
+          filter: `receiver_id=eq.${userId}`,
         },
         () => {
           updateUnreadCount();
@@ -122,18 +123,19 @@
   });
 
   async function markRead(id: number) {
-    // Optimistic update
-    notifications = notifications.filter((n) => n.id !== id);
-    // Call API (we need an endpoint for this, or just rely on navigation)
-    // For now, we assume clicking the link handles it or we add an endpoint later.
-    // Actually, let's just create a simple server action or API if needed.
-    // But for this step, let's just hide it.
+    notifications = notifications.map((n) =>
+      n.id === id ? { ...n, isRead: true } : n,
+    );
+    if (unreadNotificationCount > 0) {
+      unreadNotificationCount = Math.max(0, unreadNotificationCount - 1);
+    }
   }
 
   async function handleBellClick() {
     showNotifications = !showNotifications;
     if (showNotifications && hasUnread) {
-      hasUnread = false;
+      const pendingUnread = unreadNotificationCount;
+      unreadNotificationCount = 0;
       // Mark all as read on server
       try {
         await fetch("/api/notifications/read", { method: "POST" });
@@ -141,6 +143,7 @@
         notifications = notifications.map((n) => ({ ...n, isRead: true }));
       } catch (e) {
         console.error("Failed to mark notifications as read", e);
+        unreadNotificationCount = pendingUnread;
       }
     }
   }

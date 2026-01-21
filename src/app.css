@@ -276,3 +276,61 @@
   box-shadow: 0 4px 20px oklch(0 0 0 / 5%),
     0 2px 8px oklch(0 0 0 / 3%);
 }
+
+/* Enhanced shadows */
+.shadow-glow {
+  box-shadow: 0 0 40px oklch(0.505 0.1 145 / 20%),
+    0 4px 20px oklch(0 0 0 / 5%);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better touch targets */
+@media (hover: none) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.73 0.06 65 / 30%);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.73 0.06 65 / 50%);
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: 2px solid oklch(0.505 0.1 145);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background: oklch(0.505 0.1 145 / 20%);
+}
