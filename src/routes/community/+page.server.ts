@@ -15,7 +15,8 @@ export async function load({ locals }) {
     })
         .from(users)
         .leftJoin(profiles, eq(users.id, profiles.userId))
-        .orderBy(desc(profiles.totalMinutes));
+        .orderBy(desc(profiles.totalMinutes))
+        .limit(50);
 
     // Fetch active check-ins (last 24h)
     const activeCheckins = await db.select()

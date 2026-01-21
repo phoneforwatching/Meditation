@@ -12,7 +12,8 @@ export async function load({ locals }) {
     })
         .from(users)
         .leftJoin(profiles, eq(users.id, profiles.userId))
-        .orderBy(desc(profiles.totalMinutes));
+        .orderBy(desc(profiles.totalMinutes))
+        .limit(100);
 
     return {
         leaderboard,

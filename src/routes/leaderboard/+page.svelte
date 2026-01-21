@@ -35,7 +35,7 @@
                     class="grid grid-cols-[auto_1fr_auto] gap-4 p-4 items-center hover:bg-white/60 transition-colors {isMe
                         ? 'bg-sage/5'
                         : ''}"
-                    in:fade={{ duration: 300, delay: i * 50 }}
+                    in:fade={{ duration: 300, delay: Math.min(i * 50, 1000) }}
                 >
                     <!-- Rank -->
                     <div

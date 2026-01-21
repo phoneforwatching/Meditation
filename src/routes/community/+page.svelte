@@ -211,7 +211,7 @@
 
         <div
           class="flex flex-col items-center relative group transition-all duration-500 hover:-translate-y-2 cursor-pointer"
-          in:fly={{ y: 50, duration: 500, delay: i * 30 }}
+          in:fly={{ y: 50, duration: 500, delay: Math.min(i * 30, 1500) }}
           role="button"
           tabindex="0"
           on:click={() => !isMe && (selectedUserForAction = user)}
