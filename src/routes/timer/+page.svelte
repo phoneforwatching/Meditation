@@ -194,7 +194,8 @@
     completed = true;
     isRunning = false;
     if (isUnlimited) {
-      durationMinutes = Math.ceil(elapsedSeconds / 60);
+      // คำนวณนาที อย่างน้อย 1 นาที
+      durationMinutes = Math.max(1, Math.ceil(elapsedSeconds / 60));
     }
     vibrate(HAPTIC_PATTERNS.TIMER_COMPLETE);
     triggerShake();
