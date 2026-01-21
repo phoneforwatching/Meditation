@@ -15,6 +15,18 @@ export default defineConfig({
 	build: {
 		rollupOptions: {
 			external: ['pg-native', 'cloudflare:sockets']
-		}
-	}
+		},
+		// Build optimizations
+		target: 'esnext',
+		minify: 'esbuild',
+		cssMinify: true,
+		reportCompressedSize: false, // Faster builds
+	},
+	// Dependency optimization
+	optimizeDeps: {
+		include: ['clsx', 'tailwind-merge'],
+		exclude: ['@sveltejs/kit']
+	},
+	// Enable caching for faster rebuilds
+	cacheDir: 'node_modules/.vite'
 });

@@ -1,8 +1,11 @@
 import { verifyToken } from '$lib/server/auth';
-import { db } from '$lib/server/db';
+import { db, getCachedUser, setCachedUser } from '$lib/server/db';
 import { users, profiles } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
 import type { Handle } from '@sveltejs/kit';
+
+// Skip auth check for static assets
+const SKIP_AUTH_PATHS = ['/favicon.ico', '/_app', '/manifest.json', '/robots.txt'];
 
 export const handle: Handle = async ({ event, resolve }) => {
     // Handle ngrok forwarded headers
@@ -10,7 +13,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     const forwardedHost = event.request.headers.get('x-forwarded-host');
 
     if (forwardedProto && forwardedHost) {
-        // Reconstruct the URL with the forwarded headers
         const originalUrl = event.url;
         event.url = new URL(
             originalUrl.pathname + originalUrl.search,
@@ -18,42 +20,50 @@ export const handle: Handle = async ({ event, resolve }) => {
         );
     }
 
+    // Skip auth for static assets
+    if (SKIP_AUTH_PATHS.some(p => event.url.pathname.startsWith(p))) {
+        return resolve(event);
+    }
+
     const token = event.cookies.get('session');
 
     if (token) {
-        console.log(`[${event.url.pathname}] Session token found`);
         const payload = verifyToken(token);
         if (payload) {
-            try {
-                const [result] = await db.select({
-                    user: users,
-                    profile: profiles
-                })
-                    .from(users)
-                    .leftJoin(profiles, eq(users.id, profiles.userId))
-                    .where(eq(users.id, payload.userId));
+            // Try cache first
+            const cachedUser = getCachedUser(payload.userId);
+            if (cachedUser) {
+                event.locals.user = cachedUser;
+            } else {
+                try {
+                    const [result] = await db.select({
+                        user: users,
+                        profile: profiles
+                    })
+                        .from(users)
+                        .leftJoin(profiles, eq(users.id, profiles.userId))
+                        .where(eq(users.id, payload.userId));
 
-                if (result) {
-                    console.log(`[${event.url.pathname}] User found: ${result.user.email}`);
-                    event.locals.user = {
-                        id: result.user.id,
-                        email: result.user.email,
-                        displayName: result.profile?.displayName || null,
-                    };
-                } else {
-                    console.log(`[${event.url.pathname}] User not found in DB for ID: ${payload.userId}`);
+                    if (result) {
+                        const userData = {
+                            id: result.user.id,
+                            email: result.user.email,
+                            displayName: result.profile?.displayName || null,
+                        };
+                        event.locals.user = userData;
+                        setCachedUser(payload.userId, userData);
+                    } else {
+                        event.locals.user = null;
+                    }
+                } catch (e) {
+                    console.error(`[${event.url.pathname}] Auth error:`, e);
                     event.locals.user = null;
                 }
-            } catch (e) {
-                console.error(`[${event.url.pathname}] Auth error:`, e);
-                event.locals.user = null;
             }
         } else {
-            console.log(`[${event.url.pathname}] Token verification failed`);
             event.locals.user = null;
         }
     } else {
-        console.log(`[${event.url.pathname}] No session token found`);
         event.locals.user = null;
     }
 
