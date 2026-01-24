@@ -2,6 +2,7 @@
     import { t } from "$lib/i18n";
     import { getTreeStage } from "$lib/tree";
     import { fade } from "svelte/transition";
+    import Podium from "$lib/components/leaderboard/Podium.svelte";
 
     export let data;
 </script>
@@ -15,7 +16,14 @@
     <div
         class="bg-white/50 backdrop-blur-sm rounded-2xl shadow-sm border border-white/50 overflow-hidden"
     >
-        <!-- Header -->
+        <!-- Top 3 Podium -->
+        <Podium
+            users={data.leaderboard.slice(0, 3)}
+            currentUserId={data.currentUserId}
+        />
+
+        <!-- Header for Remaining List -->
+
         <div
             class="grid grid-cols-[auto_1fr_auto] gap-4 p-4 border-b border-slate/10 text-sm font-bold text-slate/60 bg-white/50"
         >
@@ -24,9 +32,10 @@
             <div class="text-right">{$t("leaderboard.time")}</div>
         </div>
 
-        <!-- List -->
-        <div class="divide-y divide-slate/5">
-            {#each data.leaderboard as user, i}
+        <!-- List (Rank 4+) -->
+        <div class="divide-y divide-slate/5 bg-white/30">
+            {#each data.leaderboard.slice(3) as user, i}
+                {@const actualRank = i + 4}
                 {@const isMe = user.id === data.currentUserId}
                 {@const stage = getTreeStage(user.totalMinutes)}
 
@@ -38,15 +47,8 @@
                     in:fade={{ duration: 300, delay: Math.min(i * 50, 1000) }}
                 >
                     <!-- Rank -->
-                    <div
-                        class="w-8 text-center font-bold {i < 3
-                            ? 'text-2xl'
-                            : 'text-slate/40'}"
-                    >
-                        {#if i === 0}🥇
-                        {:else if i === 1}🥈
-                        {:else if i === 2}🥉
-                        {:else}{i + 1}{/if}
+                    <div class="w-8 text-center font-bold text-slate/40">
+                        {actualRank}
                     </div>
 
                     <!-- User -->
