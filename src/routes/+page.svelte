@@ -173,7 +173,7 @@
   $: isViewingCurrentMonth = isSameYearMonth(currentDate, new Date());
 </script>
 
-<div class="min-h-screen bg-gradient-to-b from-cream/50 to-white pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
+<div class="min-h-screen bg-cream pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
   <!-- Enhanced Hero Section -->
   <section
     class="relative overflow-hidden rounded-b-[4rem] pt-8 pb-6 mb-3 -mx-4 px-4"
@@ -182,16 +182,14 @@
     style="transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);"
   >
     <!-- Background Gradient Mesh -->
-    <div
-      class="absolute inset-0 bg-gradient-to-br from-sage/5 via-cream to-peach/5"
-    ></div>
+    <div class="absolute inset-0 bg-cream/90"></div>
     
     <!-- Animated Gradient Orbs -->
     <div
-      class="absolute top-1/4 -left-20 w-80 h-80 bg-gradient-to-r from-sage/10 to-teal-400/10 rounded-full blur-3xl animate-float"
+      class="absolute top-1/4 -left-20 w-80 h-80 bg-gradient-to-r from-cream/40 to-cream/20 rounded-full blur-3xl animate-float"
     ></div>
     <div
-      class="absolute bottom-1/4 -right-20 w-80 h-80 bg-gradient-to-l from-peach/10 to-amber-400/10 rounded-full blur-3xl animate-float"
+      class="absolute bottom-1/4 -right-20 w-80 h-80 bg-gradient-to-l from-cream/35 to-cream/20 rounded-full blur-3xl animate-float"
       style="animation-delay: 2s;"
     ></div>
     
@@ -200,9 +198,7 @@
       class="relative max-w-4xl mx-auto bg-white/70 backdrop-blur-xl rounded-3xl border border-white/40 shadow-2xl shadow-sage/10 overflow-hidden"
     >
       <!-- Inner Glow -->
-      <div
-        class="absolute inset-0 bg-gradient-to-r from-sage/5 via-transparent to-peach/5"
-      ></div>
+      <div class="absolute inset-0 bg-cream/35"></div>
       
       <div class="relative p-8 md:p-12">
         <!-- Greeting with Avatar -->
@@ -905,7 +901,7 @@
         <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Legend -->
           <div class="bg-gradient-to-br from-white/50 to-cream/30 rounded-xl p-4 border border-white/40">
-            <h3 class="text-sm font-bold text-slate mb-3">{$t("stats.intensityTitle")}</h3>
+            <h3 class="text-sm font-bold text-slate mb-3 text-center md:text-left">{$t("stats.intensityTitle")}</h3>
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div class="flex items-center gap-2">
                 <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-cream to-cream/80 border border-white/40"></div>

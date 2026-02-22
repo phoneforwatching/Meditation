@@ -202,7 +202,7 @@
   <nav
     class="p-4 flex justify-between items-center max-w-4xl mx-auto transition-colors duration-300 {isDarkPage
       ? 'bg-[#0B1026]/80 backdrop-blur-sm rounded-2xl mt-2 border border-white/10'
-      : ''}"
+      : 'bg-cream/85 backdrop-blur-sm rounded-2xl mt-2 border border-earth/10'}"
   >
     <a
       href="/"
