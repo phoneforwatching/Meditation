@@ -49,6 +49,7 @@ export const handle: Handle = async ({ event, resolve }) => {
                             id: result.user.id,
                             email: result.user.email,
                             displayName: result.profile?.displayName || null,
+                            avatarUrl: result.profile?.avatarUrl || null,
                         };
                         event.locals.user = userData;
                         setCachedUser(payload.userId, userData);

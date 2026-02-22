@@ -52,6 +52,10 @@ export const actions = {
             '/'
         );
 
-        throw redirect(303, '/');
+        const redirectParams = new URLSearchParams({
+            logged: '1',
+            minutes: String(duration)
+        });
+        throw redirect(303, `/?${redirectParams.toString()}`);
     }
 };

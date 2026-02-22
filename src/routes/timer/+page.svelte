@@ -245,7 +245,7 @@
 </script>
 
 <div
-  class="max-w-lg mx-auto py-8 text-center space-y-6 {isShaking
+  class="max-w-lg mx-auto py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] text-center space-y-6 {isShaking
     ? 'animate-shake'
     : ''}"
 >
@@ -412,24 +412,23 @@
       <Card.Root class="glass shadow-soft">
         <Card.Content class="pt-6">
           <div class="flex justify-center gap-4 mb-4">
-            <div class="text-center">
-              <div class="text-3xl font-bold text-primary">
-                {durationMinutes}
+              <div class="text-center">
+                <div class="text-3xl font-bold text-primary">
+                  {durationMinutes}
+                </div>
+                <div class="text-xs text-muted-foreground">{$t("timer.minutes")}</div>
               </div>
-              <div class="text-xs text-muted-foreground">นาที</div>
             </div>
-          </div>
 
-          <div class="flex flex-col gap-3">
-            <Button asChild size="lg" class="rounded-xl">
+            <div class="flex flex-col gap-3">
               <a
                 href="/log?duration={durationMinutes}&type=Breath"
                 onclick={handleLogClick}
+                class="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2 font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors"
               >
                 <span class="mr-2">📝</span>
                 {$t("timer.log")}
               </a>
-            </Button>
             <Button
               variant="ghost"
               onclick={() => {
@@ -555,14 +554,14 @@
             (durationMinutes * 60 - timeLeft) / 60,
           )}&type=Breath"
           onclick={handleLogClick}
-          class="text-sm text-muted-foreground hover:text-primary transition-colors"
+          class="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-primary transition-colors"
         >
           {$t("timer.finishEarly")}
         </a>
       {:else}
         <button
           onclick={finishTimer}
-          class="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
+          class="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
         >
           {$t("timer.finishAndLog")}
         </button>

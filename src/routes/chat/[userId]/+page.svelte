@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { page } from "$app/stores";
     import { afterUpdate } from "svelte";
+    import { t } from "$lib/i18n";
 
     export let data;
 
@@ -121,7 +121,7 @@
 
         if (!res.ok) {
             // Handle error (remove optimistic message, show alert, etc.)
-            alert("Failed to send message");
+            alert($t("chat.sendFailed"));
             messages = messages.filter((m) => m !== optimisticMsg);
             newMessage = content; // Restore input
         } else {
@@ -149,17 +149,18 @@
 </script>
 
 <div
-    class="flex flex-col h-[calc(100vh-6rem)] max-w-2xl mx-auto bg-white/50 backdrop-blur-sm shadow-sm border border-white/20 rounded-2xl overflow-hidden my-4"
+    class="my-4 flex max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/50 shadow-sm backdrop-blur-sm"
+    style="height: calc(100dvh - 7rem);"
 >
     <!-- Header -->
     <div
         class="bg-white/80 p-4 border-b border-slate/10 flex items-center gap-3"
     >
-        <a href="/chat" class="text-slate/60 hover:text-sage transition-colors">
-            ← Back
+        <a href="/chat" class="inline-flex min-h-11 items-center text-slate/70 hover:text-sage transition-colors">
+            ← {$t("chat.back")}
         </a>
         <div class="font-bold text-slate text-lg">
-            {data.otherUser.displayName || "User"}
+            {data.otherUser.displayName || $t("chat.unknownUser")}
         </div>
     </div>
 
@@ -190,7 +191,7 @@
                         {#if msg.senderId === data.currentUserId}
                             <div
                                 class="text-[10px] opacity-60"
-                                title={msg.isRead ? "Read" : "Sent"}
+                                title={msg.isRead ? $t("chat.read") : $t("chat.sent")}
                             >
                                 {msg.isRead ? "✓✓" : "✓"}
                             </div>
@@ -202,27 +203,27 @@
 
         {#if messages.length === 0}
             <div class="text-center text-slate/40 mt-10">
-                Start the conversation with {data.otherUser.displayName}!
+                {$t("chat.startConversation")} {data.otherUser.displayName || $t("chat.unknownUser")}!
             </div>
         {/if}
     </div>
 
     <!-- Input -->
-    <div class="p-4 bg-white/80 border-t border-slate/10">
+    <div class="border-t border-slate/10 bg-white/80 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div class="flex gap-2">
             <input
                 type="text"
                 bind:value={newMessage}
                 on:keydown={handleKeydown}
-                placeholder="Type a message..."
-                class="flex-1 bg-slate-50 border-transparent focus:border-sage focus:ring-sage rounded-xl px-4 py-2 transition-all"
+                placeholder={$t("chat.typePlaceholder")}
+                class="min-h-11 flex-1 rounded-xl border border-transparent bg-slate-50 px-4 py-2 transition-all focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/25"
             />
             <button
                 on:click={sendMessage}
                 disabled={!newMessage.trim()}
-                class="bg-sage text-white px-4 py-2 rounded-xl font-bold hover:bg-sage/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="min-h-11 rounded-xl bg-sage px-4 py-2 font-bold text-white transition-colors hover:bg-sage/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                Send
+                {$t("chat.send")}
             </button>
         </div>
     </div>

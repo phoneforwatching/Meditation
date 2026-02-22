@@ -1,7 +1,7 @@
 import { evaluateAchievements } from '$lib/achievements';
 import { db } from '$lib/server/db';
-import { meditationSessions } from '$lib/server/schema';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { meditationSessions, profiles } from '$lib/server/schema';
+import { eq, desc, and, sql, gt, isNotNull } from 'drizzle-orm';
 import { redirect, fail } from '@sveltejs/kit';
 
 export async function load({ locals }) {
@@ -10,25 +10,31 @@ export async function load({ locals }) {
     }
 
     const userId = locals.user.id;
+    const completedSessionFilter = and(
+        eq(meditationSessions.userId, userId),
+        gt(meditationSessions.durationMinutes, 0),
+        isNotNull(meditationSessions.completedAt)
+    );
 
     const [
         totals,
         dailyRows,
         typeRows,
-        recentSessions
+        recentSessions,
+        profileRows
     ] = await Promise.all([
         db.select({
             totalMinutes: sql<number>`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`,
             totalSessions: sql<number>`COUNT(*)`,
         })
             .from(meditationSessions)
-            .where(eq(meditationSessions.userId, userId)),
+            .where(completedSessionFilter),
         db.select({
             day: sql<string>`DATE(${meditationSessions.completedAt})`,
             minutes: sql<number>`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`
         })
             .from(meditationSessions)
-            .where(eq(meditationSessions.userId, userId))
+            .where(completedSessionFilter)
             .groupBy(sql`DATE(${meditationSessions.completedAt})`)
             .orderBy(sql`DATE(${meditationSessions.completedAt}) DESC`),
         db.select({
@@ -36,13 +42,19 @@ export async function load({ locals }) {
             count: sql<number>`COUNT(*)`,
         })
             .from(meditationSessions)
-            .where(eq(meditationSessions.userId, userId))
+            .where(completedSessionFilter)
             .groupBy(meditationSessions.sessionType),
         db.select()
             .from(meditationSessions)
-            .where(eq(meditationSessions.userId, userId))
+            .where(completedSessionFilter)
             .orderBy(desc(meditationSessions.completedAt))
-            .limit(5)
+            .limit(5),
+        db.select({
+            dailyGoalMinutes: profiles.dailyGoalMinutes
+        })
+            .from(profiles)
+            .where(eq(profiles.userId, userId))
+            .limit(1)
     ]);
 
     const formatDateKey = (date: Date) => {
@@ -59,6 +71,7 @@ export async function load({ locals }) {
 
     const totalMinutes = Number(totals[0]?.totalMinutes ?? 0);
     const totalSessions = Number(totals[0]?.totalSessions ?? 0);
+    const dailyGoalMinutes = Math.max(1, Number(profileRows[0]?.dailyGoalMinutes ?? 10));
 
     // Simple streak calculation
     let streak = 0;
@@ -123,6 +136,7 @@ export async function load({ locals }) {
         totalMinutes,
         totalSessions,
         streak,
+        dailyGoalMinutes,
         recentSessions,
         typeDistribution,
         dailyMinutes,

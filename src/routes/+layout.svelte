@@ -297,7 +297,9 @@
     </div>
   </nav>
 
-  <main class="p-4 max-w-4xl mx-auto space-y-4 pb-24">
+  <main
+    class="p-4 max-w-4xl mx-auto space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom))]"
+  >
     {#if unreadMessageCount > 0 && $page.url.pathname !== "/chat" && !unreadPopupDismissed}
       <div
         class="bg-blue-100 border border-blue-200 text-slate p-4 rounded-xl flex justify-between items-center animate-bounce-short"
@@ -328,7 +330,7 @@
   <!-- Bottom Navigation Bar -->
   {#if $page.data.user && !isAuthPage}
     <nav
-      class="fixed bottom-0 left-0 right-0 border-t shadow-lg backdrop-blur-md z-50 transition-all duration-300 {!isDarkPage
+      class="fixed bottom-0 left-0 right-0 border-t pb-[env(safe-area-inset-bottom)] shadow-lg backdrop-blur-md z-50 transition-all duration-300 {!isDarkPage
         ? 'bg-white/80 border-earth/20'
         : 'bg-[#0B1026]/90 border-white/10'}"
     >

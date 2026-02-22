@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
+import { db, invalidateUserCache } from '$lib/server/db';
 import { profiles } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
 import { getSupabaseAdmin } from '$lib/server/supabaseAdmin';
@@ -73,6 +73,8 @@ export async function POST({ request, locals }) {
         await db.update(profiles)
             .set(updateData)
             .where(eq(profiles.userId, locals.user.id));
+
+        invalidateUserCache(locals.user.id);
 
         return json({ success: true, avatarUrl: updateData.avatarUrl });
     } catch (e) {
