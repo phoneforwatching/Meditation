@@ -80,13 +80,62 @@
     }
   }
 
-  let loading = true;
+  const SPLASH_STEPS = {
+    en: ["Inhale", "Hold", "Exhale"],
+    th: ["หายใจเข้า", "กลั้นไว้", "หายใจออก"],
+  } as const;
+
+  let showLaunchScreen = true;
+  let launchScreenExiting = false;
+  let launchStepLabel = "";
+  let launchTimers: Array<ReturnType<typeof setTimeout>> = [];
+
+  $: launchSubtitle =
+    $locale === "th"
+      ? "กำลังเตรียมพื้นที่สงบของคุณ"
+      : "Preparing your calm space";
+
+  function clearLaunchTimers() {
+    for (const timer of launchTimers) {
+      clearTimeout(timer);
+    }
+    launchTimers = [];
+  }
+
+  function startLaunchSequence() {
+    const steps = $locale === "th" ? SPLASH_STEPS.th : SPLASH_STEPS.en;
+    clearLaunchTimers();
+    launchScreenExiting = false;
+    showLaunchScreen = true;
+    launchStepLabel = steps[0];
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      launchTimers.push(
+        setTimeout(() => {
+          showLaunchScreen = false;
+        }, 120),
+      );
+      return;
+    }
+
+    launchTimers.push(
+      setTimeout(() => {
+        launchStepLabel = steps[1];
+      }, 680),
+      setTimeout(() => {
+        launchStepLabel = steps[2];
+      }, 1320),
+      setTimeout(() => {
+        launchScreenExiting = true;
+      }, 1920),
+      setTimeout(() => {
+        showLaunchScreen = false;
+      }, 2480),
+    );
+  }
 
   onMount(() => {
-    // Simulate branding/loading time
-    setTimeout(() => {
-      loading = false;
-    }, 2000);
+    startLaunchSequence();
 
     // Subscribe to Supabase Realtime
     const userId = $page.data.user?.id;
@@ -126,6 +175,7 @@
   });
 
   onDestroy(() => {
+    clearLaunchTimers();
     if (subscription) supabase.removeChannel(subscription);
   });
 
@@ -156,37 +206,53 @@
   }
 </script>
 
-{#if loading}
+{#if showLaunchScreen}
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-sage/10 via-cream to-peach/10 backdrop-blur-xl transition-all duration-700 pointer-events-none"
-    style="opacity: {loading ? 1 : 0}"
+    class="launch-screen"
+    class:launch-screen--exit={launchScreenExiting}
+    aria-hidden="true"
   >
-    <div
-      class="relative flex flex-col items-center animate-in zoom-in-95 duration-1000 fade-in"
-    >
-      <!-- Pulsing Glows -->
-      <div
-        class="absolute inset-0 bg-sage/20 rounded-full blur-3xl animate-pulse"
-      ></div>
+    <div class="launch-screen__backdrop"></div>
+    <div class="launch-screen__mesh"></div>
+    <div class="launch-screen__grain"></div>
+    <div class="launch-screen__orb launch-screen__orb--one"></div>
+    <div class="launch-screen__orb launch-screen__orb--two"></div>
+    <div class="launch-screen__orb launch-screen__orb--three"></div>
+    <div class="launch-screen__beam launch-screen__beam--left"></div>
+    <div class="launch-screen__beam launch-screen__beam--right"></div>
+    <div class="launch-screen__constellation">
+      <span class="launch-screen__dot launch-screen__dot--1"></span>
+      <span class="launch-screen__dot launch-screen__dot--2"></span>
+      <span class="launch-screen__dot launch-screen__dot--3"></span>
+      <span class="launch-screen__dot launch-screen__dot--4"></span>
+      <span class="launch-screen__dot launch-screen__dot--5"></span>
+      <span class="launch-screen__dot launch-screen__dot--6"></span>
+    </div>
 
-      <!-- Icon -->
-      <div
-        class="relative z-10 text-8xl mb-6 animate-bounce-short drop-shadow-2xl"
-      >
-        🌳
+    <div class="launch-center">
+      <div class="launch-center__halo"></div>
+      <div class="launch-ring launch-ring--outer"></div>
+      <div class="launch-ring launch-ring--middle"></div>
+      <div class="launch-ring launch-ring--inner"></div>
+
+      <div class="launch-emblem">
+        <img
+          src="/icon-192.png"
+          alt=""
+          class="launch-emblem__logo"
+          width="88"
+          height="88"
+        />
       </div>
 
-      <!-- Text -->
-      <h1
-        class="text-4xl font-bold text-sage tracking-[0.2em] animate-pulse drop-shadow-sm"
-      >
-        BREATHE
-      </h1>
-      <p
-        class="text-slate/40 text-xs tracking-[0.3em] mt-3 uppercase font-medium"
-      >
-        Mindfulness Journey
-      </p>
+      <h1 class="launch-title">BREATHE</h1>
+      <p class="launch-subtitle">{launchSubtitle}</p>
+
+      <div class="launch-progress" role="presentation">
+        <span class="launch-progress__bar"></span>
+      </div>
+
+      <p class="launch-phase">{launchStepLabel}</p>
     </div>
   </div>
 {/if}
