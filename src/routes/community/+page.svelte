@@ -8,23 +8,22 @@
   // Podium constants removed as per redesign
 
   let nudgedUsers = new Set<number>();
-  let activeUsers = new Set<number>(); // Users currently meditating
   let particles: Array<{x: number, y: number, size: number, speed: number, opacity: number}> = [];
   let timeOfDay = "day";
   let forestAmbience = "calm";
-  let showAchievements = false;
   let showSoundControls = false;
   let forestSoundPlaying = false;
   let soundVolume = 0.5;
-  let achievements = [
-    { id: 1, titleKey: "community.achievement1Title", descriptionKey: "community.achievement1Desc", icon: "🌱", unlocked: true },
-    { id: 2, titleKey: "community.achievement2Title", descriptionKey: "community.achievement2Desc", icon: "🦋", unlocked: false },
-    { id: 3, titleKey: "community.achievement3Title", descriptionKey: "community.achievement3Desc", icon: "📖", unlocked: false },
-    { id: 4, titleKey: "community.achievement4Title", descriptionKey: "community.achievement4Desc", icon: "🧘", unlocked: false },
-    { id: 5, titleKey: "community.achievement5Title", descriptionKey: "community.achievement5Desc", icon: "🎵", unlocked: true },
-    { id: 6, titleKey: "community.achievement6Title", descriptionKey: "community.achievement6Desc", icon: "🦉", unlocked: false },
-    { id: 7, titleKey: "community.achievement7Title", descriptionKey: "community.achievement7Desc", icon: "🌳", unlocked: false },
-  ];
+  type SoundPresetId = "forest" | "rain" | "ocean" | "relaxing";
+  const SOUND_PRESETS: Record<SoundPresetId, { src: string; icon: string }> = {
+    forest: { src: "/music/forest.mp3", icon: "🌲" },
+    rain: { src: "/music/rain.mp3", icon: "🌧️" },
+    ocean: { src: "/music/ocean.mp3", icon: "🌊" },
+    relaxing: { src: "/music/relaxing.mp3", icon: "🎼" },
+  };
+  let selectedSoundPreset: SoundPresetId = "forest";
+  let ambientAudio: HTMLAudioElement | null = null;
+  let soundStatusMessage = "";
 
   // Check-in State
   let showCheckinModal = false;
@@ -72,22 +71,60 @@
     return user.displayName || $t("community.anonymous");
   }
 
-  function getActiveUsersText() {
-    if ($locale === "th") {
-      return `กำลังนั่งสมาธิ ${activeUsers.size} คน`;
-    }
-    return `${activeUsers.size} ${
-      activeUsers.size === 1
-        ? $t("community.activeNowSingular")
-        : $t("community.activeNowPlural")
-    }`;
-  }
-
   function clearCheckinPreview() {
     if (checkinPhotoPreview) {
       URL.revokeObjectURL(checkinPhotoPreview);
       checkinPhotoPreview = null;
     }
+  }
+
+  function ensureAmbientAudio() {
+    if (ambientAudio) return ambientAudio;
+    ambientAudio = new Audio(SOUND_PRESETS[selectedSoundPreset].src);
+    ambientAudio.loop = true;
+    ambientAudio.preload = "auto";
+    ambientAudio.volume = soundVolume;
+    return ambientAudio;
+  }
+
+  async function setAmbientPlayback(shouldPlay: boolean) {
+    const audio = ensureAmbientAudio();
+    audio.volume = soundVolume;
+    forestSoundPlaying = shouldPlay;
+
+    if (!shouldPlay) {
+      audio.pause();
+      soundStatusMessage = "";
+      return;
+    }
+
+    try {
+      await audio.play();
+      soundStatusMessage = "";
+    } catch (error) {
+      forestSoundPlaying = false;
+      soundStatusMessage = $t("community.audioBlocked");
+      console.error("Ambient sound play failed:", error);
+    }
+  }
+
+  function toggleAmbientSound() {
+    void setAmbientPlayback(!forestSoundPlaying);
+  }
+
+  function applySoundPreset(preset: SoundPresetId, volume: number) {
+    selectedSoundPreset = preset;
+    soundVolume = volume;
+
+    const audio = ensureAmbientAudio();
+    audio.pause();
+    audio.src = SOUND_PRESETS[preset].src;
+    audio.load();
+    void setAmbientPlayback(true);
+  }
+
+  $: if (ambientAudio) {
+    ambientAudio.volume = soundVolume;
   }
 
   // Initialize particles for forest ambiance
@@ -102,14 +139,6 @@
         opacity: Math.random() * 0.3 + 0.1
       });
     }
-
-    // Simulate some active users (in real app, this would come from WebSocket)
-    const activeUsersTimeout = setTimeout(() => {
-      if (data.leaderboard.length > 0) {
-        activeUsers.add(data.leaderboard[0].id);
-        activeUsers = activeUsers;
-      }
-    }, 2000);
 
     // Change time of day based on actual time
     const hour = new Date().getHours();
@@ -140,9 +169,13 @@
     animationFrameId = requestAnimationFrame(animateParticles);
 
     return () => {
-      clearTimeout(activeUsersTimeout);
       cancelAnimationFrame(animationFrameId);
       clearCheckinPreview();
+      if (ambientAudio) {
+        ambientAudio.pause();
+        ambientAudio.src = "";
+        ambientAudio = null;
+      }
     };
   });
 
@@ -307,14 +340,6 @@
     <div class="mb-3 flex flex-wrap items-center justify-center gap-2 md:absolute md:top-0 md:right-4 md:mb-0">
       <button
         class="min-h-11 min-w-11 text-slate/60 hover:text-sage transition-colors p-2 rounded-full hover:bg-sage/10"
-        on:click={() => showAchievements = !showAchievements}
-        title={$t("community.achievements")}
-        aria-label={$t("community.achievements")}
-      >
-        🏆
-      </button>
-      <button
-        class="min-h-11 min-w-11 text-slate/60 hover:text-sage transition-colors p-2 rounded-full hover:bg-sage/10"
         on:click={() => showSoundControls = !showSoundControls}
         title={$t("community.forestSounds")}
         aria-label={$t("community.forestSounds")}
@@ -331,15 +356,6 @@
     <h1 class="text-4xl font-bold text-sage">{$t("community.title")}</h1>
     <p class="text-slate/60">{$t("community.subtitle")}</p>
     
-    <!-- Active Users Counter -->
-    <div class="flex justify-center items-center gap-2 mt-2">
-      <div class="flex items-center gap-1">
-        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-        <span class="text-sm text-slate/60">
-          {getActiveUsersText()}
-        </span>
-      </div>
-    </div>
   </div>
 
   <!-- Forest Scene Container -->
@@ -917,7 +933,7 @@
               class="w-14 h-8 rounded-full bg-sage/20 relative transition-colors {forestSoundPlaying
                 ? 'bg-sage'
                 : 'bg-slate/20'}"
-              on:click={() => (forestSoundPlaying = !forestSoundPlaying)}
+              on:click={toggleAmbientSound}
               aria-label={$t("community.toggleSound")}
               aria-pressed={forestSoundPlaying}
             >
@@ -953,113 +969,44 @@
             <div class="grid grid-cols-2 gap-3">
               <button
                 class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
-                on:click={() => {
-                  forestSoundPlaying = true;
-                  soundVolume = 0.3;
-                }}
+                on:click={() => applySoundPreset("rain", 0.3)}
               >
-                <div class="text-2xl mb-2">🌧️</div>
+                <div class="text-2xl mb-2">{SOUND_PRESETS.rain.icon}</div>
                 <div class="font-medium text-sage">{$t("community.presetRain")}</div>
               </button>
               <button
                 class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
-                on:click={() => {
-                  forestSoundPlaying = true;
-                  soundVolume = 0.5;
-                }}
+                on:click={() => applySoundPreset("ocean", 0.5)}
               >
-                <div class="text-2xl mb-2">🌊</div>
+                <div class="text-2xl mb-2">{SOUND_PRESETS.ocean.icon}</div>
                 <div class="font-medium text-sage">{$t("community.presetOcean")}</div>
               </button>
               <button
                 class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
-                on:click={() => {
-                  forestSoundPlaying = true;
-                  soundVolume = 0.4;
-                }}
+                on:click={() => applySoundPreset("relaxing", 0.4)}
               >
-                <div class="text-2xl mb-2">🐦</div>
-                <div class="font-medium text-sage">{$t("community.presetBirds")}</div>
+                <div class="text-2xl mb-2">{SOUND_PRESETS.relaxing.icon}</div>
+                <div class="font-medium text-sage">{$t("community.presetRelaxing")}</div>
               </button>
               <button
                 class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
-                on:click={() => {
-                  forestSoundPlaying = true;
-                  soundVolume = 0.2;
-                }}
+                on:click={() => applySoundPreset("forest", 0.2)}
               >
-                <div class="text-2xl mb-2">🍃</div>
-                <div class="font-medium text-sage">{$t("community.presetWind")}</div>
+                <div class="text-2xl mb-2">{SOUND_PRESETS.forest.icon}</div>
+                <div class="font-medium text-sage">{$t("community.presetForest")}</div>
               </button>
             </div>
+            {#if soundStatusMessage}
+              <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                {soundStatusMessage}
+              </p>
+            {/if}
           </div>
         </div>
       </div>
     </div>
   {/if}
 
-  <!-- Achievements Panel -->
-  {#if showAchievements}
-    <div
-      class="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4"
-      transition:fade={{ duration: 200 }}
-      role="button"
-      tabindex="0"
-      on:click|self={() => (showAchievements = false)}
-      on:keydown={(e) => e.key === "Escape" && (showAchievements = false)}
-    >
-      <div
-        class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom-10 fade-in duration-300"
-        role="dialog"
-        aria-modal="true"
-        tabindex="-1"
-      >
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold text-sage">{$t("community.achievements")} 🏆</h2>
-          <button
-            class="text-slate/40 hover:text-slate text-2xl"
-            on:click={() => (showAchievements = false)}
-            aria-label={$t("community.close")}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div class="space-y-4">
-          {#each achievements as achievement}
-            <div
-              class="flex items-center gap-4 p-4 rounded-xl border {achievement.unlocked
-                ? 'border-sage/30 bg-sage/5'
-                : 'border-slate/20 bg-slate/5'}"
-            >
-              <div class="text-3xl {achievement.unlocked ? '' : 'opacity-40'}">
-                {achievement.icon}
-              </div>
-              <div class="flex-1">
-                <div class="font-bold text-slate {achievement.unlocked ? '' : 'text-slate/60'}">
-                  {$t(achievement.titleKey)}
-                </div>
-                <div class="text-sm text-slate/60">
-                  {$t(achievement.descriptionKey)}
-                </div>
-              </div>
-              <div class="text-xs font-medium px-2 py-1 rounded-full {achievement.unlocked
-                ? 'bg-sage/20 text-sage'
-                : 'bg-slate/20 text-slate/60'}">
-                {achievement.unlocked ? $t("badges.unlocked") : $t("badges.locked")}
-              </div>
-            </div>
-          {/each}
-        </div>
-
-        <div class="mt-6 pt-6 border-t border-slate/20">
-          <p class="text-sm text-slate/60 text-center">
-            {$t("community.achievementHint")}
-          </p>
-        </div>
-      </div>
-    </div>
-  {/if}
 </div>
 
 <style>
