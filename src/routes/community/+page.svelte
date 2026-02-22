@@ -1,12 +1,30 @@
 <script lang="ts">
   import { getTreeStage } from "$lib/tree";
   import { fade, fly } from "svelte/transition";
-  import { t } from "$lib/i18n";
+  import { locale, t } from "$lib/i18n";
+  import { onMount } from "svelte";
   export let data;
 
   // Podium constants removed as per redesign
 
   let nudgedUsers = new Set<number>();
+  let activeUsers = new Set<number>(); // Users currently meditating
+  let particles: Array<{x: number, y: number, size: number, speed: number, opacity: number}> = [];
+  let timeOfDay = "day";
+  let forestAmbience = "calm";
+  let showAchievements = false;
+  let showSoundControls = false;
+  let forestSoundPlaying = false;
+  let soundVolume = 0.5;
+  let achievements = [
+    { id: 1, titleKey: "community.achievement1Title", descriptionKey: "community.achievement1Desc", icon: "🌱", unlocked: true },
+    { id: 2, titleKey: "community.achievement2Title", descriptionKey: "community.achievement2Desc", icon: "🦋", unlocked: false },
+    { id: 3, titleKey: "community.achievement3Title", descriptionKey: "community.achievement3Desc", icon: "📖", unlocked: false },
+    { id: 4, titleKey: "community.achievement4Title", descriptionKey: "community.achievement4Desc", icon: "🧘", unlocked: false },
+    { id: 5, titleKey: "community.achievement5Title", descriptionKey: "community.achievement5Desc", icon: "🎵", unlocked: true },
+    { id: 6, titleKey: "community.achievement6Title", descriptionKey: "community.achievement6Desc", icon: "🦉", unlocked: false },
+    { id: 7, titleKey: "community.achievement7Title", descriptionKey: "community.achievement7Desc", icon: "🌳", unlocked: false },
+  ];
 
   // Check-in State
   let showCheckinModal = false;
@@ -34,9 +52,103 @@
     5: "border-green-400",
   };
 
+  function getTimeOfDayLabel(value: string) {
+    if (value === "morning") return $t("community.timeMorning");
+    if (value === "afternoon") return $t("community.timeAfternoon");
+    if (value === "evening") return $t("community.timeEvening");
+    if (value === "night") return $t("community.timeNight");
+    return value;
+  }
+
+  function getAmbienceLabel(value: string) {
+    if (value === "calm") return $t("community.ambienceCalm");
+    if (value === "serene") return $t("community.ambienceSerene");
+    if (value === "energetic") return $t("community.ambienceEnergetic");
+    if (value === "peaceful") return $t("community.ambiencePeaceful");
+    return value;
+  }
+
+  function getDisplayName(user: { displayName?: string | null }) {
+    return user.displayName || $t("community.anonymous");
+  }
+
+  function getActiveUsersText() {
+    if ($locale === "th") {
+      return `กำลังนั่งสมาธิ ${activeUsers.size} คน`;
+    }
+    return `${activeUsers.size} ${
+      activeUsers.size === 1
+        ? $t("community.activeNowSingular")
+        : $t("community.activeNowPlural")
+    }`;
+  }
+
+  function clearCheckinPreview() {
+    if (checkinPhotoPreview) {
+      URL.revokeObjectURL(checkinPhotoPreview);
+      checkinPhotoPreview = null;
+    }
+  }
+
+  // Initialize particles for forest ambiance
+  onMount(() => {
+    // Create floating particles
+    for (let i = 0; i < 30; i++) {
+      particles.push({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 3 + 1,
+        speed: Math.random() * 0.5 + 0.2,
+        opacity: Math.random() * 0.3 + 0.1
+      });
+    }
+
+    // Simulate some active users (in real app, this would come from WebSocket)
+    const activeUsersTimeout = setTimeout(() => {
+      if (data.leaderboard.length > 0) {
+        activeUsers.add(data.leaderboard[0].id);
+        activeUsers = activeUsers;
+      }
+    }, 2000);
+
+    // Change time of day based on actual time
+    const hour = new Date().getHours();
+    if (hour >= 18 || hour < 6) {
+      timeOfDay = "night";
+      forestAmbience = "serene";
+    } else if (hour >= 6 && hour < 12) {
+      timeOfDay = "morning";
+      forestAmbience = "energetic";
+    } else if (hour >= 12 && hour < 15) {
+      timeOfDay = "afternoon";
+      forestAmbience = "peaceful";
+    } else {
+      timeOfDay = "evening";
+      forestAmbience = "calm";
+    }
+
+    // Animate particles
+    let animationFrameId = 0;
+    const animateParticles = () => {
+      particles = particles.map(p => ({
+        ...p,
+        y: (p.y + p.speed) % 100,
+        x: (p.x + Math.sin(Date.now() * 0.001 + p.x) * 0.1) % 100
+      }));
+      animationFrameId = requestAnimationFrame(animateParticles);
+    };
+    animationFrameId = requestAnimationFrame(animateParticles);
+
+    return () => {
+      clearTimeout(activeUsersTimeout);
+      cancelAnimationFrame(animationFrameId);
+      clearCheckinPreview();
+    };
+  });
+
   function resetCheckinForm() {
     checkinPhoto = null;
-    checkinPhotoPreview = null;
+    clearCheckinPreview();
     checkinMood = 3;
     checkinCaption = "";
     isSubmitting = false;
@@ -51,8 +163,10 @@
   async function compressImage(file: File): Promise<File> {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.src = URL.createObjectURL(file);
+      const sourceUrl = URL.createObjectURL(file);
+      img.src = sourceUrl;
       img.onload = () => {
+        URL.revokeObjectURL(sourceUrl);
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         if (!ctx) {
@@ -106,7 +220,10 @@
           0.8,
         ); // 0.8 quality
       };
-      img.onerror = (e) => reject(e);
+      img.onerror = (e) => {
+        URL.revokeObjectURL(sourceUrl);
+        reject(e);
+      };
     });
   }
 
@@ -122,6 +239,7 @@
           "bytes",
         );
         // Show preview immediately with original
+        clearCheckinPreview();
         checkinPhotoPreview = URL.createObjectURL(originalFile);
 
         // Compress in background
@@ -170,12 +288,12 @@
           .json()
           .catch(() => ({ error: "Unknown error" }));
         console.error("Server error:", errorData);
-        alert(`Failed to post check-in: ${errorData.error || "Unknown error"}`);
+        alert(`${$t("community.postFailed")}: ${errorData.error || "Unknown error"}`);
       }
     } catch (e) {
       console.error("Network error:", e);
       alert(
-        `Error posting check-in: ${e instanceof Error ? e.message : "Unknown error"}`,
+        `${$t("community.postError")}: ${e instanceof Error ? e.message : "Unknown error"}`,
       );
     } finally {
       isSubmitting = false;
@@ -183,23 +301,89 @@
   }
 </script>
 
-<div class="min-h-[80vh] flex flex-col">
-  <div class="text-center space-y-2 mb-8">
+<div class="min-h-[80vh] flex flex-col pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
+  <!-- Header with Time of Day Indicator -->
+  <div class="text-center space-y-2 mb-8 relative">
+    <div class="mb-3 flex flex-wrap items-center justify-center gap-2 md:absolute md:top-0 md:right-4 md:mb-0">
+      <button
+        class="min-h-11 min-w-11 text-slate/60 hover:text-sage transition-colors p-2 rounded-full hover:bg-sage/10"
+        on:click={() => showAchievements = !showAchievements}
+        title={$t("community.achievements")}
+        aria-label={$t("community.achievements")}
+      >
+        🏆
+      </button>
+      <button
+        class="min-h-11 min-w-11 text-slate/60 hover:text-sage transition-colors p-2 rounded-full hover:bg-sage/10"
+        on:click={() => showSoundControls = !showSoundControls}
+        title={$t("community.forestSounds")}
+        aria-label={$t("community.forestSounds")}
+      >
+        {forestSoundPlaying ? '🔊' : '🔇'}
+      </button>
+      <div class="text-xs bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border border-slate/10">
+        <span class="text-sage font-medium">{getTimeOfDayLabel(timeOfDay)}</span>
+        <span class="text-slate/40 mx-1">•</span>
+        <span class="text-slate/60">{getAmbienceLabel(forestAmbience)}</span>
+      </div>
+    </div>
+    
     <h1 class="text-4xl font-bold text-sage">{$t("community.title")}</h1>
     <p class="text-slate/60">{$t("community.subtitle")}</p>
+    
+    <!-- Active Users Counter -->
+    <div class="flex justify-center items-center gap-2 mt-2">
+      <div class="flex items-center gap-1">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <span class="text-sm text-slate/60">
+          {getActiveUsersText()}
+        </span>
+      </div>
+    </div>
   </div>
 
   <!-- Forest Scene Container -->
-  <div class="flex-1 relative pb-12 min-h-[60vh]">
-    <!-- Sky/Background -->
+  <div class="flex-1 relative pb-12 min-h-[60vh] overflow-hidden">
+    <!-- Floating Particles -->
+    {#each particles as particle, i}
+      <div
+        class="absolute pointer-events-none -z-5"
+        style="
+          left: {particle.x}%;
+          top: {particle.y}%;
+          width: {particle.size}px;
+          height: {particle.size}px;
+          opacity: {particle.opacity};
+          background: {timeOfDay === 'night' ? 'rgba(255,255,255,0.3)' : 'rgba(74, 124, 89, 0.2)'};
+          border-radius: 50%;
+          filter: blur(1px);
+        "
+      ></div>
+    {/each}
+
+    <!-- Sky/Background with Time of Day -->
     <div
-      class="absolute inset-0 pointer-events-none bg-gradient-to-b from-blue-50/50 to-transparent -z-10"
+      class="absolute inset-0 pointer-events-none -z-10 transition-all duration-1000 bg-gradient-to-b {timeOfDay === 'night' ? 'from-indigo-900/20' : timeOfDay === 'evening' ? 'from-orange-50/60' : 'from-blue-50/50'} to-transparent"
+    ></div>
+
+    <!-- Sun/Moon -->
+    <div
+      class="absolute top-8 right-8 w-12 h-12 rounded-full pointer-events-none -z-5 transition-all duration-1000 shadow-lg {timeOfDay === 'night' ? 'bg-gray-300/60' : timeOfDay === 'evening' ? 'bg-orange-400/70' : 'bg-yellow-300/80'}"
+      style="filter: blur(2px);"
     ></div>
 
     <!-- Ground Gradient (Subtle) -->
     <div
       class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-earth/10 to-transparent pointer-events-none"
     ></div>
+
+    <!-- Interactive Forest Elements -->
+    <div class="absolute bottom-32 left-8 text-3xl opacity-20 animate-pulse cursor-pointer hover:opacity-40 transition-opacity">
+      🍄
+    </div>
+    <div class="absolute bottom-40 right-12 text-2xl opacity-30 animate-bounce-slow cursor-pointer hover:opacity-60 transition-opacity">
+      🦋
+    </div>
 
     <!-- Trees Container -->
     <div
@@ -216,7 +400,9 @@
           tabindex="0"
           on:click={() => !isMe && (selectedUserForAction = user)}
           on:keydown={(e) =>
-            e.key === "Enter" && !isMe && (selectedUserForAction = user)}
+            (e.key === "Enter" || e.key === " ") &&
+            !isMe &&
+            (e.preventDefault(), (selectedUserForAction = user))}
         >
           <!-- Tree -->
           <div
@@ -257,7 +443,7 @@
                   >
                     <img
                       src={user.checkinPhoto}
-                      alt="Check-in"
+                      alt={$t("community.checkinImageAlt")}
                       class="w-20 h-20 rounded-full object-cover border-4 {user.checkinMood
                         ? MOOD_COLORS[user.checkinMood]
                         : 'border-white'} shadow-lg bg-white"
@@ -304,7 +490,7 @@
               {#if user.avatarUrl}
                 <img
                   src={user.avatarUrl}
-                  alt={user.displayName}
+                  alt={getDisplayName(user)}
                   class="w-5 h-5 rounded-full object-cover border border-white/50"
                 />
               {:else}
@@ -315,7 +501,7 @@
                 </div>
               {/if}
               <span class="max-w-[80px] truncate"
-                >{user.displayName || "Anonymous"}</span
+                >{getDisplayName(user)}</span
               >
               {#if isMe}
                 <span class="w-1.5 h-1.5 rounded-full bg-sage animate-pulse"
@@ -325,14 +511,14 @@
 
             <!-- Actions (Only visible on hover/focus to keep forest clean) -->
             <div
-              class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              class="flex justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity duration-200"
             >
               {#if !isMe && !nudgedUsers.has(user.id)}
                 <button
-                  class="text-lg hover:scale-125 active:scale-95 transition-transform"
-                  title="{$t('community.nudge')} {user.displayName}"
+                  class="min-h-11 min-w-11 text-lg hover:scale-125 active:scale-95 transition-transform rounded-full"
+                  title={`${$t("community.nudge")} ${getDisplayName(user)}`}
+                  aria-label={`${$t("community.nudge")} ${getDisplayName(user)}`}
                   on:click={async (e) => {
-                    const btn = e.currentTarget;
                     // Optimistic update
                     nudgedUsers.add(user.id);
                     nudgedUsers = nudgedUsers; // Trigger reactivity
@@ -374,8 +560,9 @@
               {#if !isMe}
                 <a
                   href="/chat/{user.id}"
-                  class="text-lg hover:scale-125 active:scale-95 transition-transform"
-                  title="Message {user.displayName}"
+                  class="min-h-11 min-w-11 inline-flex items-center justify-center text-lg hover:scale-125 active:scale-95 transition-transform rounded-full"
+                  title={`${$t("community.message")} ${getDisplayName(user)}`}
+                  aria-label={`${$t("community.message")} ${getDisplayName(user)}`}
                 >
                   💬
                 </a>
@@ -395,8 +582,9 @@
 
   <!-- Check-in Button -->
   <button
-    class="fixed bottom-24 right-6 bg-sage text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform z-40 flex items-center gap-2"
+    class="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 sm:right-6 bg-sage text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform z-40 inline-flex min-h-11 items-center gap-2"
     on:click={() => (showCheckinModal = true)}
+    aria-label={$t("community.checkin")}
   >
     <span class="text-2xl">📸</span>
     <span class="font-bold hidden md:inline">{$t("community.checkin")}</span>
@@ -408,10 +596,11 @@
       class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
       transition:fade
     >
-      <div class="bg-white rounded-2xl p-6 w-full max-w-md space-y-6 relative">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-md space-y-6 relative" role="dialog" aria-modal="true" tabindex="-1">
         <button
           class="absolute top-4 right-4 text-slate/40 hover:text-slate"
           on:click={closeCheckinModal}
+          aria-label={$t("community.close")}
         >
           ✕
         </button>
@@ -429,7 +618,7 @@
               {#if checkinPhotoPreview}
                 <img
                   src={checkinPhotoPreview}
-                  alt="Preview"
+                  alt={$t("community.previewAlt")}
                   class="absolute inset-0 w-full h-full object-cover"
                 />
               {:else}
@@ -456,11 +645,13 @@
             <div class="flex justify-between px-2">
               {#each [1, 2, 3, 4, 5] as m}
                 <button
+                  type="button"
                   class="text-3xl transition-transform hover:scale-125 {checkinMood ===
                   m
                     ? 'scale-125 grayscale-0'
                     : 'grayscale opacity-50'}"
                   on:click={() => (checkinMood = m)}
+                  aria-label={`mood ${m}`}
                 >
                   {MOODS[m]}
                 </button>
@@ -477,6 +668,7 @@
           />
 
           <button
+            type="button"
             class="w-full bg-sage text-white font-bold py-3 rounded-xl shadow-md disabled:opacity-50"
             disabled={(!checkinPhoto && !checkinCaption) || isSubmitting}
             on:click={submitCheckin}
@@ -501,6 +693,7 @@
       <button
         class="absolute top-4 right-4 text-white/60 hover:text-white text-4xl z-50"
         on:click={() => (viewingStory = null)}
+        aria-label={$t("community.close")}
       >
         ✕
       </button>
@@ -553,7 +746,7 @@
           <!-- Main Image -->
           <img
             src={viewingStory.checkinPhoto}
-            alt="Story"
+            alt={$t("community.storyAlt")}
             class="absolute inset-0 w-full h-full object-cover"
           />
 
@@ -587,6 +780,7 @@
         class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 space-y-6 animate-in slide-in-from-bottom-10 fade-in duration-300"
         role="dialog"
         aria-modal="true"
+        tabindex="-1"
       >
         <!-- Header -->
         <div class="text-center space-y-2">
@@ -605,7 +799,7 @@
           {/if}
           <div>
             <h3 class="text-xl font-bold text-slate-800">
-              {selectedUserForAction.displayName || "Anonymous"}
+              {getDisplayName(selectedUserForAction)}
             </h3>
             <p class="text-slate-500 text-sm">
               {selectedUserForAction.totalMinutes || 0}
@@ -679,8 +873,190 @@
           class="w-full py-3 text-slate-400 font-medium hover:text-slate-600 transition-colors"
           on:click={() => (selectedUserForAction = null)}
         >
-          {$t("common.cancel")}
+          {$t("log.cancel")}
         </button>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Sound Controls Panel -->
+  {#if showSoundControls}
+    <div
+      class="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"
+      transition:fade={{ duration: 200 }}
+      role="button"
+      tabindex="0"
+      on:click|self={() => (showSoundControls = false)}
+      on:keydown={(e) => e.key === "Escape" && (showSoundControls = false)}
+    >
+      <div
+        class="bg-white rounded-2xl p-6 w-full max-w-md animate-in slide-in-from-bottom-10 fade-in duration-300"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+      >
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-sage">{$t("community.forestSounds")} 🎵</h2>
+          <button
+            class="text-slate/40 hover:text-slate text-2xl"
+            on:click={() => (showSoundControls = false)}
+            aria-label={$t("community.close")}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Sound Toggle -->
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-bold text-slate">{$t("community.ambientSounds")}</div>
+              <div class="text-sm text-slate/60">{$t("community.ambientDescription")}</div>
+            </div>
+            <button
+              class="w-14 h-8 rounded-full bg-sage/20 relative transition-colors {forestSoundPlaying
+                ? 'bg-sage'
+                : 'bg-slate/20'}"
+              on:click={() => (forestSoundPlaying = !forestSoundPlaying)}
+              aria-label={$t("community.toggleSound")}
+              aria-pressed={forestSoundPlaying}
+            >
+              <div
+                class="absolute top-1 w-6 h-6 rounded-full bg-white transition-transform {forestSoundPlaying
+                  ? 'left-7'
+                  : 'left-1'}"
+              ></div>
+            </button>
+          </div>
+
+          <!-- Volume Control -->
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <div class="font-bold text-slate">{$t("community.volume")}</div>
+              <div class="text-sm text-sage font-medium">
+                {Math.round(soundVolume * 100)}%
+              </div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              bind:value={soundVolume}
+              class="w-full h-2 bg-slate/20 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sage"
+            />
+          </div>
+
+          <!-- Sound Presets -->
+          <div class="space-y-3">
+            <div class="font-bold text-slate">{$t("community.soundPresets")}</div>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
+                on:click={() => {
+                  forestSoundPlaying = true;
+                  soundVolume = 0.3;
+                }}
+              >
+                <div class="text-2xl mb-2">🌧️</div>
+                <div class="font-medium text-sage">{$t("community.presetRain")}</div>
+              </button>
+              <button
+                class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
+                on:click={() => {
+                  forestSoundPlaying = true;
+                  soundVolume = 0.5;
+                }}
+              >
+                <div class="text-2xl mb-2">🌊</div>
+                <div class="font-medium text-sage">{$t("community.presetOcean")}</div>
+              </button>
+              <button
+                class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
+                on:click={() => {
+                  forestSoundPlaying = true;
+                  soundVolume = 0.4;
+                }}
+              >
+                <div class="text-2xl mb-2">🐦</div>
+                <div class="font-medium text-sage">{$t("community.presetBirds")}</div>
+              </button>
+              <button
+                class="p-4 rounded-xl border border-sage/30 bg-sage/5 hover:bg-sage/10 transition-colors text-center"
+                on:click={() => {
+                  forestSoundPlaying = true;
+                  soundVolume = 0.2;
+                }}
+              >
+                <div class="text-2xl mb-2">🍃</div>
+                <div class="font-medium text-sage">{$t("community.presetWind")}</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Achievements Panel -->
+  {#if showAchievements}
+    <div
+      class="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4"
+      transition:fade={{ duration: 200 }}
+      role="button"
+      tabindex="0"
+      on:click|self={() => (showAchievements = false)}
+      on:keydown={(e) => e.key === "Escape" && (showAchievements = false)}
+    >
+      <div
+        class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom-10 fade-in duration-300"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+      >
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-sage">{$t("community.achievements")} 🏆</h2>
+          <button
+            class="text-slate/40 hover:text-slate text-2xl"
+            on:click={() => (showAchievements = false)}
+            aria-label={$t("community.close")}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          {#each achievements as achievement}
+            <div
+              class="flex items-center gap-4 p-4 rounded-xl border {achievement.unlocked
+                ? 'border-sage/30 bg-sage/5'
+                : 'border-slate/20 bg-slate/5'}"
+            >
+              <div class="text-3xl {achievement.unlocked ? '' : 'opacity-40'}">
+                {achievement.icon}
+              </div>
+              <div class="flex-1">
+                <div class="font-bold text-slate {achievement.unlocked ? '' : 'text-slate/60'}">
+                  {$t(achievement.titleKey)}
+                </div>
+                <div class="text-sm text-slate/60">
+                  {$t(achievement.descriptionKey)}
+                </div>
+              </div>
+              <div class="text-xs font-medium px-2 py-1 rounded-full {achievement.unlocked
+                ? 'bg-sage/20 text-sage'
+                : 'bg-slate/20 text-slate/60'}">
+                {achievement.unlocked ? $t("badges.unlocked") : $t("badges.locked")}
+              </div>
+            </div>
+          {/each}
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-slate/20">
+          <p class="text-sm text-slate/60 text-center">
+            {$t("community.achievementHint")}
+          </p>
+        </div>
       </div>
     </div>
   {/if}
@@ -699,5 +1075,27 @@
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  @keyframes bounce-slow {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 3s ease-in-out infinite;
+  }
+
+  @keyframes progress {
+    0% {
+      width: 0%;
+    }
+    100% {
+      width: 100%;
+    }
   }
 </style>
