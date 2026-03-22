@@ -41,6 +41,7 @@ export const meditationSessions = pgTable('meditation_sessions', {
     sessionType: text('session_type').notNull(),
     moodRating: integer('mood_rating'),
     notes: text('notes'),
+    tags: text('tags'),
     createdAt: timestamp('created_at').defaultNow(),
     completedAt: timestamp('completed_at').defaultNow(),
 });

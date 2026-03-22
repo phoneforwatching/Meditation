@@ -193,6 +193,15 @@
                 </span>
               {/if}
             </div>
+            {#if session.tags}
+              <div class="flex flex-wrap gap-1 mt-2">
+                {#each session.tags.split(",") as tag}
+                  <span class="rounded-full bg-sage/10 px-2 py-0.5 text-[10px] font-medium text-sage">
+                    {$t(`log.tag.${tag}`)}
+                  </span>
+                {/each}
+              </div>
+            {/if}
           </article>
         {/each}
       </div>

@@ -47,6 +47,7 @@ export async function load({ locals, url }) {
             durationMinutes: meditationSessions.durationMinutes,
             moodRating: meditationSessions.moodRating,
             notes: meditationSessions.notes,
+            tags: meditationSessions.tags,
             completedAt: meditationSessions.completedAt,
         })
             .from(meditationSessions)

@@ -1,7 +1,7 @@
 import { evaluateAchievements } from '$lib/achievements';
 import { db } from '$lib/server/db';
 import { meditationSessions, profiles } from '$lib/server/schema';
-import { eq, desc, and, sql, gt, isNotNull } from 'drizzle-orm';
+import { eq, desc, and, sql, gt, gte, isNotNull } from 'drizzle-orm';
 import { redirect, fail } from '@sveltejs/kit';
 
 export async function load({ locals }) {
@@ -16,12 +16,17 @@ export async function load({ locals }) {
         isNotNull(meditationSessions.completedAt)
     );
 
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
     const [
         totals,
         dailyRows,
         typeRows,
         recentSessions,
-        profileRows
+        profileRows,
+        weeklyMoodRows
     ] = await Promise.all([
         db.select({
             totalMinutes: sql<number>`COALESCE(SUM(${meditationSessions.durationMinutes}), 0)`,
@@ -54,7 +59,16 @@ export async function load({ locals }) {
         })
             .from(profiles)
             .where(eq(profiles.userId, userId))
-            .limit(1)
+            .limit(1),
+        db.select({
+            avgMood: sql<number>`ROUND(AVG(${meditationSessions.moodRating})::numeric, 1)`,
+        })
+            .from(meditationSessions)
+            .where(and(
+                completedSessionFilter,
+                gte(meditationSessions.completedAt, sevenDaysAgo),
+                isNotNull(meditationSessions.moodRating)
+            ))
     ]);
 
     const formatDateKey = (date: Date) => {
@@ -145,6 +159,7 @@ export async function load({ locals }) {
             totalSessions,
             streak
         }),
+        weeklyAvgMood: Number(weeklyMoodRows[0]?.avgMood ?? 0),
     };
 }
 

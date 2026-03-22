@@ -13,6 +13,7 @@ export const actions = {
         const type = String(data.get('type'));
         const mood = Number(data.get('mood')) || null;
         const notes = String(data.get('notes') || '');
+        const tags = String(data.get('tags') || '');
 
         if (!duration || duration <= 0) {
             return fail(400, { error: 'Duration must be positive' });
@@ -24,6 +25,7 @@ export const actions = {
             sessionType: type,
             moodRating: mood,
             notes,
+            tags: tags || null,
         });
 
         // Update total minutes

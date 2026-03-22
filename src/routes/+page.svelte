@@ -542,6 +542,36 @@
     </div>
   </section>
 
+  <!-- Mood & Insights Preview -->
+  <section class="max-w-4xl mx-auto px-4 mb-6">
+    <a
+      href="/insights"
+      class="block rounded-2xl border border-sage/20 bg-gradient-to-r from-white via-cream to-sage/5 p-5 shadow-md hover:shadow-lg transition-shadow"
+    >
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-12 h-12 rounded-xl bg-gradient-to-br from-sage/20 to-sage/10 flex items-center justify-center text-2xl"
+          >
+            📊
+          </div>
+          <div>
+            <h3 class="font-bold text-slate text-sm">{$t("insights.title")}</h3>
+            <p class="text-xs text-slate/60">{$t("insights.subtitle")}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          {#if data.weeklyAvgMood > 0}
+            <span class="text-lg">
+              {["", "😫", "😕", "😐", "🙂", "😊"][Math.round(data.weeklyAvgMood)] || "😐"}
+            </span>
+            <span class="text-sm font-bold text-sage">{data.weeklyAvgMood.toFixed(1)}</span>
+          {/if}
+          <span class="text-sage/60 text-sm">→</span>
+        </div>
+      </div>
+    </a>
+  </section>
 
   <!-- Achievements Section - Redesigned -->
   <section
