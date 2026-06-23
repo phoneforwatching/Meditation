@@ -2,8 +2,13 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users, profiles } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
+import type { RequestHandler } from './$types';
 
-export async function GET() {
+export const POST: RequestHandler = async ({ locals }) => {
+    if (!locals.user || locals.user.role !== 'admin') {
+        return json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     try {
         const allUsers = await db.select().from(users);
         let migratedCount = 0;
@@ -30,4 +35,4 @@ export async function GET() {
         const message = e instanceof Error ? e.message : 'Unknown error during migration';
         return json({ error: message }, { status: 500 });
     }
-}
+};

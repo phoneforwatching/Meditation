@@ -10,3 +10,8 @@ build
 dist
 *.log
 client_secret_*.json
+
+# Local debug / one-off scripts
+diagnose-*.mjs
+test-*.mjs
+TEST_*.js

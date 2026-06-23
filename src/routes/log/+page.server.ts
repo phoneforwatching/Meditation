@@ -2,7 +2,7 @@ import { db } from '$lib/server/db';
 import { meditationSessions, profiles } from '$lib/server/schema';
 import { redirect, fail } from '@sveltejs/kit';
 import { broadcastNotification } from '$lib/server/notifications';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 export const actions = {
     default: async ({ request, locals }) => {
@@ -28,31 +28,24 @@ export const actions = {
             tags: tags || null,
         });
 
-        // Update total minutes
-        const [currentProfile] = await db.select({ totalMinutes: profiles.totalMinutes })
-            .from(profiles)
-            .where(eq(profiles.userId, locals.user.id));
+        // Atomically increment total minutes (avoids a read-modify-write race
+        // when sessions are logged concurrently) and read the display name in
+        // the same statement.
+        const [updated] = await db.update(profiles)
+            .set({ totalMinutes: sql`${profiles.totalMinutes} + ${duration}` })
+            .where(eq(profiles.userId, locals.user.id))
+            .returning({ displayName: profiles.displayName });
 
-        const newTotal = (currentProfile?.totalMinutes || 0) + duration;
+        const userName = updated?.displayName || 'Someone';
 
-        await db.update(profiles)
-            .set({ totalMinutes: newTotal })
-            .where(eq(profiles.userId, locals.user.id));
-
-        // Broadcast Notification
-        const [userProfile] = await db.select({ displayName: profiles.displayName })
-            .from(profiles)
-            .where(eq(profiles.userId, locals.user.id));
-
-        const userName = userProfile?.displayName || 'Someone';
-
-        await broadcastNotification(
+        // Fire-and-forget: don't block the redirect on a fan-out write.
+        void broadcastNotification(
             locals.user.id,
             'activity',
             'Meditation Complete',
             `${userName} completed a ${duration} min meditation!`,
             '/'
-        );
+        ).catch((e) => console.error('broadcastNotification failed:', e));
 
         const redirectParams = new URLSearchParams({
             logged: '1',

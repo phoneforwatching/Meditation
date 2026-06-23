@@ -5,7 +5,7 @@
 
     export let data;
     const { profile, meditationStats, sleepStats } = data;
-    const stage = getTreeStage(profile.totalMinutes);
+    const stage = getTreeStage(profile.totalMinutes ?? 0);
 
     function formatDuration(minutes: number) {
         const h = Math.floor(minutes / 60);
@@ -109,9 +109,9 @@
                             </div>
                             <div class="text-xs text-slate/50">
                                 {new Date(
-                                    session.createdAt,
+                                    session.createdAt ?? Date.now(),
                                 ).toLocaleDateString()} • {new Date(
-                                    session.createdAt,
+                                    session.createdAt ?? Date.now(),
                                 ).toLocaleTimeString([], {
                                     hour: "2-digit",
                                     minute: "2-digit",

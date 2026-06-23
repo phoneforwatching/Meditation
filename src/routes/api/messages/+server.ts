@@ -1,8 +1,11 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { messages, profiles, notifications } from '$lib/server/schema';
-import { eq, or, and, asc, gt, desc } from 'drizzle-orm';
+import { eq, or, and, gt, desc } from 'drizzle-orm';
 import { createNotification } from '$lib/server/notifications';
+
+const MAX_MESSAGE_LENGTH = 2000;
+const CONVERSATION_PAGE_SIZE = 50;
 
 export async function POST({ request, locals }) {
     if (!locals.user) {
@@ -15,12 +18,20 @@ export async function POST({ request, locals }) {
         return json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const trimmedContent = String(content).trim();
+    if (!trimmedContent) {
+        return json({ error: 'Message cannot be empty' }, { status: 400 });
+    }
+    if (trimmedContent.length > MAX_MESSAGE_LENGTH) {
+        return json({ error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` }, { status: 400 });
+    }
+
     const senderId = locals.user.id;
 
     await db.insert(messages).values({
         senderId,
         receiverId,
-        content
+        content: trimmedContent
     });
 
     // Smart Notification: Check if we already notified this user about a message from this sender recently (e.g., 15 mins)
@@ -67,7 +78,8 @@ export async function GET({ url, locals }) {
         return json({ error: 'Missing userId parameter' }, { status: 400 });
     }
 
-    const conversation = await db.select()
+    // Fetch the most recent page, then return in chronological order.
+    const recent = await db.select()
         .from(messages)
         .where(
             or(
@@ -75,7 +87,8 @@ export async function GET({ url, locals }) {
                 and(eq(messages.senderId, Number(otherUserId)), eq(messages.receiverId, currentUserId))
             )
         )
-        .orderBy(asc(messages.createdAt));
+        .orderBy(desc(messages.createdAt))
+        .limit(CONVERSATION_PAGE_SIZE);
 
-    return json(conversation);
+    return json(recent.reverse());
 }

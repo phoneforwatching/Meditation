@@ -1,6 +1,5 @@
 import { db } from '$lib/server/db';
-import { users, messages, profiles } from '$lib/server/schema';
-import { eq, or, desc, ne, and, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { redirect } from '@sveltejs/kit';
 
 export async function load({ locals }) {
@@ -10,43 +9,35 @@ export async function load({ locals }) {
 
     const currentUserId = locals.user.id;
 
-    // Get list of users we have chatted with
-    // This is a bit complex in SQL, so we'll simplify:
-    // Get all messages where we are sender or receiver
-    // Then extract unique other user IDs
+    // One row per conversation partner = the most recent message exchanged.
+    // DISTINCT ON does the dedup in Postgres instead of pulling the user's
+    // entire message history into the server and looping in JS.
+    const rows = await db.execute(sql`
+        SELECT DISTINCT ON (other_user_id)
+            other_user_id        AS "otherUserId",
+            p.display_name        AS "otherUserName",
+            m.content             AS "content",
+            m.created_at          AS "createdAt",
+            m.sender_id           AS "senderId",
+            m.receiver_id         AS "receiverId",
+            (m.is_read = false AND m.receiver_id = ${currentUserId}) AS "isUnread"
+        FROM (
+            SELECT *,
+                CASE WHEN sender_id = ${currentUserId} THEN receiver_id ELSE sender_id END AS other_user_id
+            FROM messages
+            WHERE sender_id = ${currentUserId} OR receiver_id = ${currentUserId}
+        ) m
+        LEFT JOIN profiles p ON p.user_id = m.other_user_id
+        ORDER BY other_user_id, m.created_at DESC
+    `);
 
-    const recentMessages = await db.select({
-        senderId: messages.senderId,
-        receiverId: messages.receiverId,
-        createdAt: messages.createdAt,
-        content: messages.content,
-        isRead: messages.isRead,
-        otherUserId: sql<number>`CASE WHEN ${messages.senderId} = ${currentUserId} THEN ${messages.receiverId} ELSE ${messages.senderId} END`,
-        otherUserName: profiles.displayName
-    })
-        .from(messages)
-        .leftJoin(users, eq(users.id, sql`CASE WHEN ${messages.senderId} = ${currentUserId} THEN ${messages.receiverId} ELSE ${messages.senderId} END`))
-        .leftJoin(profiles, eq(users.id, profiles.userId))
-        .where(or(eq(messages.senderId, currentUserId), eq(messages.receiverId, currentUserId)))
-        .orderBy(desc(messages.createdAt));
-
-    // Deduplicate by otherUserId
-    const uniqueConversations = [];
-    const seenUsers = new Set();
-
-    for (const msg of recentMessages) {
-        if (!seenUsers.has(msg.otherUserId)) {
-            seenUsers.add(msg.otherUserId);
-            // It's unread if it's NOT read AND we are the receiver
-            // Note: We need to check receiverId from the message, but we didn't select it directly in a way that distinguishes row by row easily in the loop if we just rely on the join.
-            // Actually we did select senderId and receiverId.
-            const isUnread = !msg.isRead && msg.receiverId === currentUserId;
-            uniqueConversations.push({ ...msg, isUnread });
-        }
-    }
+    // Present most-recent conversation first.
+    const conversations = (rows.rows as any[]).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     return {
-        conversations: uniqueConversations,
+        conversations,
         user: locals.user
     };
 }

@@ -2,10 +2,14 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
-export default defineConfig({
+export default defineConfig(({ command }) => {
+	const isDev = command === 'serve';
+
+	return {
+	// basicSsl + the dev server HTTPS/ngrok config only matter for `vite dev`.
 	plugins: [
 		sveltekit(),
-		basicSsl()
+		...(isDev ? [basicSsl()] : [])
 	],
 	server: {
 		port: 5174,
@@ -29,4 +33,5 @@ export default defineConfig({
 	},
 	// Enable caching for faster rebuilds
 	cacheDir: 'node_modules/.vite'
+	};
 });

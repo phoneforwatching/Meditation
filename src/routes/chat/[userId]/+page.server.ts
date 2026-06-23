@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { users, messages, profiles } from '$lib/server/schema';
-import { eq, or, and, asc } from 'drizzle-orm';
+import { eq, or, and, desc } from 'drizzle-orm';
 import { redirect, error } from '@sveltejs/kit';
 
 export async function load({ params, locals }) {
@@ -28,8 +28,8 @@ export async function load({ params, locals }) {
         throw error(404, 'User not found');
     }
 
-    // Get conversation history
-    const conversation = await db.select()
+    // Get the most recent page of conversation history, returned chronologically.
+    const recent = await db.select()
         .from(messages)
         .where(
             or(
@@ -37,11 +37,12 @@ export async function load({ params, locals }) {
                 and(eq(messages.senderId, otherUserId), eq(messages.receiverId, currentUserId))
             )
         )
-        .orderBy(asc(messages.createdAt));
+        .orderBy(desc(messages.createdAt))
+        .limit(50);
 
     return {
         otherUser,
-        initialMessages: conversation,
+        initialMessages: recent.reverse(),
         currentUserId
     };
 }

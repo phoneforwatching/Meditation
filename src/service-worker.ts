@@ -6,7 +6,10 @@ const CACHE = `cache-${version}`;
 
 const ASSETS = [
     ...build, // the app itself
-    ...files  // everything in `static`
+    // everything in `static` EXCEPT large audio — precaching ~30MB of mp3 on
+    // install blocks the SW and bloats first load. Audio is cached on demand
+    // by the runtime fetch handler the first time it's played.
+    ...files.filter((f) => !f.endsWith('.mp3'))
 ];
 
 self.addEventListener('install', (event) => {
@@ -55,7 +58,9 @@ self.addEventListener('fetch', (event) => {
                 throw new Error('invalid response from fetch');
             }
 
-            if (response.status === 200) {
+            // Never cache API responses — they're user/state specific and
+            // would serve stale unread counts, messages, etc. when offline.
+            if (response.status === 200 && !url.pathname.startsWith('/api/')) {
                 cache.put(event.request, response.clone());
             }
 

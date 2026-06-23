@@ -9,6 +9,7 @@ declare global {
 				email: string;
 				displayName: string | null;
 				avatarUrl: string | null;
+				role: 'user' | 'admin';
 			} | null;
 		}
 		// interface PageData {}

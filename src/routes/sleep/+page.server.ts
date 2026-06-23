@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { sleepLogs } from '$lib/server/schema';
-import { eq, desc, gte, and, sql } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 
 export const load = async ({ locals }) => {
@@ -15,14 +15,14 @@ export const load = async ({ locals }) => {
 
     const totalSleepMinutes = totalSleepResult[0]?.totalMinutes || 0;
 
-    // Fetch last 7 days of sleep logs
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
+    // The calendar lets users browse prior months, so we fetch a bounded
+    // window (most recent ~1 year) rather than the entire lifetime history.
+    // TODO: switch to per-displayed-month fetching for users with >1y of logs.
     const recentLogs = await db.select()
         .from(sleepLogs)
         .where(eq(sleepLogs.userId, locals.user.id))
-        .orderBy(desc(sleepLogs.bedtime));
+        .orderBy(desc(sleepLogs.bedtime))
+        .limit(365);
 
     return {
         recentLogs,

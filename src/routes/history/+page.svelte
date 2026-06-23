@@ -46,6 +46,19 @@
       },
     );
   }
+
+  function pageHref(targetPage: number) {
+    const params = new URLSearchParams();
+    if (data.filters.type && data.filters.type !== "all")
+      params.set("type", data.filters.type);
+    if (data.filters.start) params.set("start", data.filters.start);
+    if (data.filters.end) params.set("end", data.filters.end);
+    if (data.filters.min) params.set("min", data.filters.min);
+    if (data.filters.max) params.set("max", data.filters.max);
+    if (targetPage > 0) params.set("page", String(targetPage));
+    const qs = params.toString();
+    return qs ? `/history?${qs}` : "/history";
+  }
 </script>
 
 <section class="max-w-4xl mx-auto px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
@@ -205,6 +218,36 @@
           </article>
         {/each}
       </div>
+
+      {#if data.page > 0 || data.hasMore}
+        <div class="mt-5 flex items-center justify-between gap-3">
+          {#if data.page > 0}
+            <a
+              href={pageHref(data.page - 1)}
+              data-sveltekit-noscroll
+              class="inline-flex min-h-11 items-center rounded-lg border border-slate/20 bg-white px-4 py-2 text-sm font-semibold text-slate transition-colors hover:bg-slate-50"
+            >
+              ← {$locale === "th" ? "ก่อนหน้า" : "Previous"}
+            </a>
+          {:else}
+            <span></span>
+          {/if}
+          <span class="text-xs text-slate/60">
+            {$locale === "th" ? `หน้า ${data.page + 1}` : `Page ${data.page + 1}`}
+          </span>
+          {#if data.hasMore}
+            <a
+              href={pageHref(data.page + 1)}
+              data-sveltekit-noscroll
+              class="inline-flex min-h-11 items-center rounded-lg border border-slate/20 bg-white px-4 py-2 text-sm font-semibold text-slate transition-colors hover:bg-slate-50"
+            >
+              {$locale === "th" ? "ถัดไป" : "Next"} →
+            </a>
+          {:else}
+            <span></span>
+          {/if}
+        </div>
+      {/if}
     {/if}
   </div>
 </section>

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { fade, scale } from "svelte/transition";
+  import { tweened } from "svelte/motion";
+  import { cubicInOut } from "svelte/easing";
   import { vibrate, HAPTIC_PATTERNS } from "$lib/haptics";
   import { t } from "$lib/i18n";
 
@@ -32,6 +34,82 @@
     { value: 20, label: "20", emoji: "🌳" },
     { value: 30, label: "30", emoji: "🏔️" },
   ];
+
+  // Breathing guide patterns. Each phase is [phaseId, seconds]; the timer
+  // circle expands on inhale, holds, and contracts on exhale in sync.
+  type BreathPhase = ["inhale" | "hold" | "exhale", number];
+  const breathPatterns: {
+    id: string;
+    name: string;
+    phases: BreathPhase[] | null;
+  }[] = [
+    { id: "none", name: "—", phases: null },
+    {
+      id: "box",
+      name: "Box · 4·4·4·4",
+      phases: [
+        ["inhale", 4],
+        ["hold", 4],
+        ["exhale", 4],
+        ["hold", 4],
+      ],
+    },
+    {
+      id: "478",
+      name: "Relax · 4·7·8",
+      phases: [
+        ["inhale", 4],
+        ["hold", 7],
+        ["exhale", 8],
+      ],
+    },
+    {
+      id: "calm",
+      name: "Calm · 4·6",
+      phases: [
+        ["inhale", 4],
+        ["exhale", 6],
+      ],
+    },
+  ];
+  let selectedBreath = "none";
+  $: breathActive = selectedBreath !== "none";
+
+  const BREATH_MIN = 0.62;
+  const BREATH_MAX = 1;
+  const breathScale = tweened(BREATH_MIN, { easing: cubicInOut });
+  let breathPhaseId: "inhale" | "hold" | "exhale" | "" = "";
+  let breathIdx = 0;
+  let breathTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function runBreathPhase(phases: BreathPhase[]) {
+    const [phase, secs] = phases[breathIdx % phases.length];
+    breathPhaseId = phase;
+    const ms = secs * 1000;
+    if (phase === "inhale") breathScale.set(BREATH_MAX, { duration: ms });
+    else if (phase === "exhale") breathScale.set(BREATH_MIN, { duration: ms });
+    // hold: keep the current scale steady
+    breathTimer = setTimeout(() => {
+      breathIdx++;
+      runBreathPhase(phases);
+    }, ms);
+  }
+
+  function startBreathing() {
+    stopBreathing();
+    const pattern = breathPatterns.find((p) => p.id === selectedBreath);
+    if (!pattern?.phases) {
+      breathPhaseId = "";
+      return;
+    }
+    breathIdx = 0;
+    runBreathPhase(pattern.phases);
+  }
+
+  function stopBreathing() {
+    if (breathTimer) clearTimeout(breathTimer);
+    breathTimer = undefined;
+  }
 
   let selectedMusic = "relaxing";
   let durationMinutes = 10;
@@ -83,10 +161,19 @@
     isPreviewPlaying = false;
   }
 
+  function selectBreath(id: string) {
+    selectedBreath = id;
+    localStorage.setItem("meditationBreath", id);
+  }
+
   onMount(() => {
     const savedMusic = localStorage.getItem("meditationMusic");
     if (savedMusic && musicOptions.find((m) => m.id === savedMusic)) {
       selectedMusic = savedMusic;
+    }
+    const savedBreath = localStorage.getItem("meditationBreath");
+    if (savedBreath && breathPatterns.find((b) => b.id === savedBreath)) {
+      selectedBreath = savedBreath;
     }
     audio = new Audio("/bell.mp3");
     audio.load();
@@ -139,6 +226,8 @@
     isPaused = false;
     completed = false;
 
+    startBreathing();
+
     interval = setInterval(() => {
       const now = Date.now();
       if (isUnlimited) {
@@ -159,6 +248,7 @@
     vibrate(HAPTIC_PATTERNS.TAP);
     isPaused = true;
     clearInterval(interval);
+    stopBreathing();
     if (bgMusic) bgMusic.pause();
   }
 
@@ -169,6 +259,8 @@
   function stopTimer() {
     vibrate(HAPTIC_PATTERNS.WARNING);
     clearInterval(interval);
+    stopBreathing();
+    breathScale.set(BREATH_MIN, { duration: 600 });
     isRunning = false;
     isPaused = false;
     if (isUnlimited) {
@@ -191,6 +283,7 @@
 
   function finishTimer() {
     clearInterval(interval);
+    stopBreathing();
     completed = true;
     isRunning = false;
     if (isUnlimited) {
@@ -215,6 +308,7 @@
 
   onDestroy(() => {
     if (interval) clearInterval(interval);
+    stopBreathing();
     if (bgMusic) {
       bgMusic.pause();
       bgMusic.currentTime = 0;
@@ -384,6 +478,31 @@
         </Card.Content>
       </Card.Root>
 
+      <!-- Breathing Guide Card -->
+      <Card.Root class="glass shadow-soft border-border/50">
+        <Card.Header class="pb-3">
+          <Card.Title class="text-lg flex items-center gap-2">
+            <span>🌬️</span>
+            {$t("timer.breathPattern")}
+          </Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <div class="flex flex-wrap gap-2 justify-center">
+            {#each breathPatterns as pattern}
+              <button
+                onclick={() => selectBreath(pattern.id)}
+                class="px-4 py-2.5 rounded-2xl border-2 text-sm font-medium transition-all
+                  {selectedBreath === pattern.id
+                  ? 'border-primary bg-primary/10 shadow-sm scale-105 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5'}"
+              >
+                {pattern.id === "none" ? $t("timer.breathFree") : pattern.name}
+              </button>
+            {/each}
+          </div>
+        </Card.Content>
+      </Card.Root>
+
       <!-- Start Button -->
       <Button
         size="lg"
@@ -448,9 +567,21 @@
       <!-- Timer Circle -->
       <div class="relative w-72 h-72 mx-auto flex items-center justify-center">
         <!-- Outer glow -->
-        <div
-          class="absolute inset-0 rounded-full bg-primary/10 blur-2xl animate-breathe"
-        ></div>
+        {#if breathActive}
+          <!-- Breathing guide: glow + ring scale with the inhale/exhale cycle -->
+          <div
+            class="absolute inset-0 rounded-full bg-primary/15 blur-2xl"
+            style="transform: scale({$breathScale});"
+          ></div>
+          <div
+            class="absolute inset-3 rounded-full border-2 border-primary/30"
+            style="transform: scale({$breathScale});"
+          ></div>
+        {:else}
+          <div
+            class="absolute inset-0 rounded-full bg-primary/10 blur-2xl animate-breathe"
+          ></div>
+        {/if}
 
         <!-- SVG Circle -->
         <svg class="w-full h-full transform -rotate-90 relative z-10">
@@ -487,9 +618,13 @@
             {isUnlimited ? formatTime(elapsedSeconds) : formatTime(timeLeft)}
           </div>
           <Badge variant="secondary" class="mt-3">
-            {isPaused
-              ? "⏸️ " + $t("timer.paused")
-              : "🧘 " + $t("timer.breathing")}
+            {#if isPaused}
+              ⏸️ {$t("timer.paused")}
+            {:else if breathActive && breathPhaseId}
+              🌬️ {$t("timer.breath." + breathPhaseId)}
+            {:else}
+              🧘 {$t("timer.breathing")}
+            {/if}
           </Badge>
         </div>
       </div>

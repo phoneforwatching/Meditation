@@ -3,6 +3,7 @@
   import "../app.css";
   import { page } from "$app/stores";
   import { locale, t } from "$lib/i18n";
+  import { ENABLE_SOCIAL } from "$lib/features";
   import type { RealtimeChannel } from "@supabase/supabase-js";
 
   async function logout() {
@@ -137,7 +138,8 @@
   onMount(() => {
     startLaunchSequence();
 
-    // Subscribe to Supabase Realtime
+    // Subscribe to Supabase Realtime (notifications are social-only for now)
+    if (!ENABLE_SOCIAL) return;
     const userId = $page.data.user?.id;
     if (!userId) return;
 
@@ -285,6 +287,7 @@
     </a>
     <div class="flex items-center gap-4">
       {#if $page.data.user && !isAuthPage}
+        {#if ENABLE_SOCIAL}
         <!-- Notification Bell -->
         <div class="relative">
           <button
@@ -343,6 +346,7 @@
             </div>
           {/if}
         </div>
+        {/if}
 
         <a
           href="/settings/profile"
@@ -366,7 +370,7 @@
   <main
     class="p-4 max-w-4xl mx-auto space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom))]"
   >
-    {#if unreadMessageCount > 0 && $page.url.pathname !== "/chat" && !unreadPopupDismissed}
+    {#if ENABLE_SOCIAL && unreadMessageCount > 0 && $page.url.pathname !== "/chat" && !unreadPopupDismissed}
       <div
         class="bg-blue-100 border border-blue-200 text-slate p-4 rounded-xl flex justify-between items-center animate-bounce-short"
       >
@@ -430,51 +434,79 @@
             <span class="text-xs font-medium">{$t("dashboard.meditate")}</span>
           </a>
 
-          <!-- Community -->
+          <!-- Insights -->
           <a
-            href="/community"
-            class="relative flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
-              '/community',
-              isDarkPage,
-              $page.url.pathname,
-            )}"
-          >
-            <span class="text-2xl">👥</span>
-            <span class="text-xs font-medium">{$t("nav.community")}</span>
-          </a>
-
-          <!-- Leaderboard -->
-          <a
-            href="/leaderboard"
+            href="/insights"
             class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
-              '/leaderboard',
+              '/insights',
               isDarkPage,
               $page.url.pathname,
             )}"
           >
-            <span class="text-2xl">🏆</span>
-            <span class="text-xs font-medium">{$t("nav.leaderboard")}</span>
+            <span class="text-2xl">📊</span>
+            <span class="text-xs font-medium">{$t("nav.insights")}</span>
           </a>
 
-          <!-- Chat -->
-          <a
-            href="/chat"
-            class="relative flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
-              '/chat',
-              isDarkPage,
-              $page.url.pathname,
-            )}"
-          >
-            <span class="text-2xl">💬</span>
-            <span class="text-xs font-medium">{$t("nav.chat")}</span>
-            {#if unreadMessageCount > 0}
-              <span
-                class="absolute -top-1 right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white min-w-[1.25rem] text-center"
-              >
-                {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
-              </span>
-            {/if}
-          </a>
+          {#if ENABLE_SOCIAL}
+            <!-- Community -->
+            <a
+              href="/community"
+              class="relative flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
+                '/community',
+                isDarkPage,
+                $page.url.pathname,
+              )}"
+            >
+              <span class="text-2xl">👥</span>
+              <span class="text-xs font-medium">{$t("nav.community")}</span>
+            </a>
+
+            <!-- Leaderboard -->
+            <a
+              href="/leaderboard"
+              class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
+                '/leaderboard',
+                isDarkPage,
+                $page.url.pathname,
+              )}"
+            >
+              <span class="text-2xl">🏆</span>
+              <span class="text-xs font-medium">{$t("nav.leaderboard")}</span>
+            </a>
+
+            <!-- Chat -->
+            <a
+              href="/chat"
+              class="relative flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
+                '/chat',
+                isDarkPage,
+                $page.url.pathname,
+              )}"
+            >
+              <span class="text-2xl">💬</span>
+              <span class="text-xs font-medium">{$t("nav.chat")}</span>
+              {#if unreadMessageCount > 0}
+                <span
+                  class="absolute -top-1 right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white min-w-[1.25rem] text-center"
+                >
+                  {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                </span>
+              {/if}
+            </a>
+          {:else}
+            <!-- History -->
+            <a
+              href="/history"
+              class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
+                '/history',
+                isDarkPage,
+                $page.url.pathname,
+              )}"
+            >
+              <span class="text-2xl">📅</span>
+              <span class="text-xs font-medium">{$t("nav.history")}</span>
+            </a>
+          {/if}
         </div>
       </div>
     </nav>

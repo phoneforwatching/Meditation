@@ -2,7 +2,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
 
-const JWT_SECRET = env.JWT_SECRET || 'fallback-secret-do-not-use-in-prod';
+if (!env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable must be set');
+}
+const JWT_SECRET = env.JWT_SECRET;
 
 export const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10);

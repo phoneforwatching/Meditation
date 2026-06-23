@@ -14,6 +14,9 @@ export async function load({ locals, url }) {
     const min = Number(url.searchParams.get('min') || 0);
     const max = Number(url.searchParams.get('max') || 0);
 
+    const PAGE_SIZE = 50;
+    const page = Math.max(0, Number(url.searchParams.get('page') || 0) || 0);
+
     const baseConditions = [
         eq(meditationSessions.userId, locals.user.id),
         gt(meditationSessions.durationMinutes, 0),
@@ -52,7 +55,9 @@ export async function load({ locals, url }) {
         })
             .from(meditationSessions)
             .where(and(...filterConditions))
-            .orderBy(desc(meditationSessions.completedAt)),
+            .orderBy(desc(meditationSessions.completedAt))
+            .limit(PAGE_SIZE)
+            .offset(page * PAGE_SIZE),
         db.selectDistinct({
             sessionType: meditationSessions.sessionType
         })
@@ -63,18 +68,22 @@ export async function load({ locals, url }) {
             count: sql<number>`COUNT(*)`
         })
             .from(meditationSessions)
-            .where(and(...baseConditions))
+            .where(and(...filterConditions))
     ]);
 
     const sessionTypes = sessionTypeRows
         .map(row => row.sessionType)
         .filter((sessionType): sessionType is string => Boolean(sessionType));
     const totalSessions = Number(totalRows[0]?.count ?? 0);
+    const hasMore = (page + 1) * PAGE_SIZE < totalSessions;
 
     return {
         sessions,
         sessionTypes,
         totalSessions,
+        page,
+        pageSize: PAGE_SIZE,
+        hasMore,
         filters: {
             type: type || 'all',
             start,

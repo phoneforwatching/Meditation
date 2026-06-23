@@ -21,10 +21,14 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(sender_id, rece
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, is_read) WHERE is_read = false;
 CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
+-- Covers the 15-min message-notification dedup check in /api/messages
+CREATE INDEX IF NOT EXISTS idx_notifications_user_type_link ON notifications(user_id, type, link, created_at DESC);
 
 -- Nudges
 CREATE INDEX IF NOT EXISTS idx_nudges_receiver_id ON nudges(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_nudges_sender_id ON nudges(sender_id);
+-- Covers the per-pair 24h spam check in /api/nudge
+CREATE INDEX IF NOT EXISTS idx_nudges_pair_created ON nudges(sender_id, receiver_id, created_at DESC);
 
 -- Daily Checkins
 CREATE INDEX IF NOT EXISTS idx_daily_checkins_user_id ON daily_checkins(user_id);

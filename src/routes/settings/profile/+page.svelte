@@ -61,9 +61,9 @@
                     Profile Settings
                 </h1>
                 <a
-                    href="/community"
+                    href="/"
                     class="text-sm text-sage hover:text-sage-dark"
-                    >Back to Community</a
+                    >Back to Home</a
                 >
             </div>
 

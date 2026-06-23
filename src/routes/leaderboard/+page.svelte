@@ -37,7 +37,7 @@
             {#each data.leaderboard.slice(3) as user, i}
                 {@const actualRank = i + 4}
                 {@const isMe = user.id === data.currentUserId}
-                {@const stage = getTreeStage(user.totalMinutes)}
+                {@const stage = getTreeStage(user.totalMinutes ?? 0)}
 
                 <a
                     href="/profile/{user.id}"

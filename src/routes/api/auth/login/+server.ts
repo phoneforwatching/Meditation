@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { users, profiles } from '$lib/server/schema';
 import { comparePassword, createToken } from '$lib/server/auth';
 import { eq } from 'drizzle-orm';
+import { dev } from '$app/environment';
 
 export async function POST({ request, cookies }) {
     const { email, password } = await request.json();
@@ -38,7 +39,7 @@ export async function POST({ request, cookies }) {
             path: '/',
             httpOnly: true,
             sameSite: 'strict',
-            secure: process.env.NODE_ENV === 'production',
+            secure: !dev,
             maxAge: 60 * 60 * 24 * 7, // 7 days
         });
 

@@ -9,6 +9,8 @@ const translations = {
             community: 'Community',
             sleep: 'Sleep',
             stats: 'Stats',
+            insights: 'Insights',
+            history: 'History',
             chat: 'Chat',
             leaderboard: 'Rank',
             hello: 'Hello',
@@ -62,7 +64,10 @@ const translations = {
             quickStart: 'Quick Start',
             minutes: 'min',
             unlimited: 'Unlimited',
-            finishAndLog: 'Finish & Log Session'
+            finishAndLog: 'Finish & Log Session',
+            breathPattern: 'Breathing Guide',
+            breathFree: 'Free',
+            breath: { inhale: 'Inhale', hold: 'Hold', exhale: 'Exhale' }
         },
         stats: {
             progress: 'Your Progress',
@@ -342,6 +347,8 @@ const translations = {
             community: 'ชุมชน',
             sleep: 'นอนหลับ',
             stats: 'สถิติ',
+            insights: 'เชิงลึก',
+            history: 'ประวัติ',
             chat: 'แชท',
             leaderboard: 'อันดับ',
             hello: 'สวัสดี',
@@ -395,7 +402,10 @@ const translations = {
             quickStart: 'เริ่มด่วน',
             minutes: 'นาที',
             unlimited: 'ไม่จำกัดเวลา',
-            finishAndLog: 'เสร็จสิ้นและบันทึกผล'
+            finishAndLog: 'เสร็จสิ้นและบันทึกผล',
+            breathPattern: 'จังหวะหายใจ',
+            breathFree: 'อิสระ',
+            breath: { inhale: 'หายใจเข้า', hold: 'กลั้นไว้', exhale: 'หายใจออก' }
         },
         stats: {
             progress: 'ความก้าวหน้าของคุณ',
