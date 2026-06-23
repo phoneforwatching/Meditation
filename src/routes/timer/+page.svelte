@@ -466,6 +466,19 @@
         <p class="text-muted-foreground">เลือกระยะเวลาและเริ่มนั่งสมาธิ</p>
       </div>
 
+      <!-- Guided sessions entry -->
+      <a
+        href="/guided"
+        class="flex items-center gap-3 rounded-2xl border-2 border-primary/20 bg-primary/5 p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]"
+      >
+        <span class="text-2xl">🧭</span>
+        <span class="flex-1">
+          <span class="block font-semibold text-primary">{$t("guided.title")}</span>
+          <span class="block text-xs text-muted-foreground">{$t("guided.subtitle")}</span>
+        </span>
+        <span class="text-primary/40 text-xl">→</span>
+      </a>
+
       <!-- Duration Card -->
       <Card.Root class="glass shadow-soft border-border/50">
         <Card.Header class="pb-3">

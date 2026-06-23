@@ -126,7 +126,8 @@
 
 ### Phase 2 — Content & Habit (2–4 สัปดาห์)
 > 🔀 **งานที่ทำคู่ขนานระหว่างเซสชัน (commits `38550fc`–`0f36cc4`):** shareable session card (timer), tag-frequency chart (insights), recent-activity feed (community), Web Push (VAPID). ดู `TASK.md` ประกอบ
-- [ ] **Guided sessions** TH 3–5 บท (อัดเสียง/TTS) ในหน้า timer (5.1 ส่วนสอง) — *ยังต้องตัดสินใจ: TTS ผ่าน MCP vs อัดเสียง + สคริปต์ + เสียง*
+- [x] **Guided sessions** (5.1 ส่วนสอง) — เสร็จเวอร์ชัน **text-guided** (ไม่ต้องรอเสียง): `/guided` library + `/guided/[id]` player, 4 เซสชัน TH-first (ก่อนนอน/คลายกังวล/โฟกัส/สแกนร่างกาย) ขับ breathing visual + ambient + step prompts ตามเวลา, จบแล้วลิงก์ไป `/log`. entry อยู่บนหน้า timer ✅ ผ่าน build
+  - *follow-up (optional):* เติม narrated audio ต่อ session (TTS ผ่าน MCP / อัดเสียง) — โครง player รองรับ field `audio` ได้เลย
 - [ ] **Weekly insight summary** — แกนข้อมูลมีในหน้า Insights แล้ว (trend/avg mood/best time); เหลือทำเป็น **push สรุปรายสัปดาห์** ผ่าน push infra ที่มีแล้ว
 - [ ] วัดผล retention (D1/D7/D30) — *ยังต้องเลือก provider (PostHog/Plausible) ก่อนใส่ event tracking*
 

@@ -8,6 +8,8 @@
         displayName: string | null;
         avatarUrl: string | null;
         totalMinutes: number | null;
+        // Lifetime minutes for tree-stage; falls back to totalMinutes if absent.
+        lifetimeMinutes?: number | null;
     }
 
     export let users: User[] = [];
@@ -31,7 +33,7 @@
     {#each displayUsers as user, i}
         {#if user}
             {@const isMe = user.id === currentUserId}
-            {@const stage = getTreeStage(user.totalMinutes || 0)}
+            {@const stage = getTreeStage(user.lifetimeMinutes ?? user.totalMinutes ?? 0)}
             {@const isFirst = user.rank === 1}
 
             <!-- Card Container -->

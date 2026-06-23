@@ -364,6 +364,16 @@ const translations = {
             next: 'Next',
             back: 'Back',
             skip: 'Skip for now'
+        },
+        guided: {
+            title: 'Guided Sessions',
+            subtitle: 'Follow along — a little voice in text to guide your practice',
+            hint: 'Choose a session that fits how you feel right now',
+            begin: 'Begin',
+            allSessions: 'All sessions',
+            completeTitle: 'Beautifully done',
+            completeDesc: 'Take a breath and notice how you feel.',
+            logCta: 'Log this session'
         }
     },
     th: {
@@ -727,6 +737,16 @@ const translations = {
             next: 'ถัดไป',
             back: 'ย้อนกลับ',
             skip: 'ข้ามไปก่อน'
+        },
+        guided: {
+            title: 'สมาธินำทาง',
+            subtitle: 'ทำตามไปทีละขั้น — มีข้อความคอยนำคุณตลอดทาง',
+            hint: 'เลือกเซสชันที่เข้ากับความรู้สึกตอนนี้ของคุณ',
+            begin: 'เริ่ม',
+            allSessions: 'เซสชันทั้งหมด',
+            completeTitle: 'ทำได้ดีมาก',
+            completeDesc: 'หายใจสักครั้ง แล้วสังเกตความรู้สึกของคุณ',
+            logCta: 'บันทึกเซสชันนี้'
         }
     }
 };
