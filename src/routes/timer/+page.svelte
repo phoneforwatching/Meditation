@@ -4,7 +4,7 @@
   import { tweened } from "svelte/motion";
   import { cubicInOut } from "svelte/easing";
   import { vibrate, HAPTIC_PATTERNS } from "$lib/haptics";
-  import { t } from "$lib/i18n";
+  import { t, locale } from "$lib/i18n";
 
   // shadcn components
   import { Button } from "$lib/components/ui/button";
@@ -330,6 +330,115 @@
     }
   }
 
+  // --- Shareable session card (TikTok/Stories virality loop) ---
+  let isSharing = false;
+
+  function treeForMinutes(min: number) {
+    if (min >= 30) return "🏔️";
+    if (min >= 20) return "🌳";
+    if (min >= 15) return "🌲";
+    if (min >= 10) return "🌿";
+    return "🌱";
+  }
+
+  function drawSessionCard(): Promise<Blob | null> {
+    const W = 1080;
+    const H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return Promise.resolve(null);
+
+    // Background: cream → soft sage wash
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#F9F7F2");
+    grad.addColorStop(1, "#E3EDE4");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Soft glow behind the tree
+    const glow = ctx.createRadialGradient(W / 2, 720, 80, W / 2, 720, 540);
+    glow.addColorStop(0, "rgba(74,124,89,0.20)");
+    glow.addColorStop(1, "rgba(74,124,89,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 180, W, 1080);
+
+    ctx.textAlign = "center";
+
+    // Tree
+    ctx.font = "340px serif";
+    ctx.fillText(treeForMinutes(durationMinutes), W / 2, 840);
+
+    // Minutes number
+    ctx.fillStyle = "#4A7C59";
+    ctx.font = "bold 300px 'Sukhumvit Set', Inter, sans-serif";
+    ctx.fillText(String(durationMinutes), W / 2, 1250);
+
+    // Caption
+    ctx.fillStyle = "#2C3E50";
+    ctx.font = "600 62px 'Sukhumvit Set', Inter, sans-serif";
+    ctx.fillText(
+      $locale === "th" ? "นาทีแห่งความสงบ" : "minutes of calm",
+      W / 2,
+      1350,
+    );
+
+    // Wordmark + tagline
+    ctx.fillStyle = "#4A7C59";
+    ctx.font = "bold 76px 'Sukhumvit Set', Inter, sans-serif";
+    ctx.fillText("BREATHE", W / 2, 1660);
+    ctx.fillStyle = "rgba(44,62,80,0.55)";
+    ctx.font = "44px 'Sukhumvit Set', Inter, sans-serif";
+    ctx.fillText(
+      $locale === "th" ? "ฝึกสมาธิทุกวัน" : "meditate every day",
+      W / 2,
+      1730,
+    );
+
+    return new Promise((res) => canvas.toBlob(res, "image/png"));
+  }
+
+  async function shareSession() {
+    if (isSharing) return;
+    isSharing = true;
+    vibrate(HAPTIC_PATTERNS.TAP);
+    try {
+      const blob = await drawSessionCard();
+      if (!blob) return;
+      const file = new File([blob], "breathe-session.png", {
+        type: "image/png",
+      });
+      const text =
+        $locale === "th"
+          ? `เพิ่งนั่งสมาธิ ${durationMinutes} นาที 🧘 #BREATHE`
+          : `Just meditated for ${durationMinutes} minutes 🧘 #BREATHE`;
+
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({ files: [file], title: "BREATHE", text });
+      } else {
+        // Fallback: download the card so it can be posted manually
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "breathe-session.png";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      // AbortError = user dismissed the share sheet; ignore quietly
+      if ((e as Error)?.name !== "AbortError") {
+        console.log("Share failed", e);
+      }
+    } finally {
+      isSharing = false;
+    }
+  }
+
   $: progress =
     isRunning || isPaused
       ? isUnlimited
@@ -548,6 +657,14 @@
                 <span class="mr-2">📝</span>
                 {$t("timer.log")}
               </a>
+              <button
+                onclick={shareSession}
+                disabled={isSharing}
+                class="inline-flex min-h-11 items-center justify-center rounded-xl border-2 border-primary/30 px-4 py-2 font-semibold text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+              >
+                <span class="mr-2">{isSharing ? "⏳" : "📤"}</span>
+                {$locale === "th" ? "แชร์การ์ด" : "Share card"}
+              </button>
             <Button
               variant="ghost"
               onclick={() => {
