@@ -6,9 +6,11 @@ import { dev } from '$app/environment';
 import { redirect, type Handle } from '@sveltejs/kit';
 import {
     ENABLE_SOCIAL,
+    ENABLE_LEADERBOARD,
     ENABLE_SLEEP,
     SOCIAL_PAGE_PREFIXES,
     SOCIAL_API_PREFIXES,
+    LEADERBOARD_PAGE_PREFIXES,
     SLEEP_PAGE_PREFIXES
 } from '$lib/features';
 
@@ -24,6 +26,7 @@ function guardDisabledFeatures(pathname: string): Response | null {
         if (matches(SOCIAL_PAGE_PREFIXES)) throw redirect(302, '/');
         if (matches(SOCIAL_API_PREFIXES)) return new Response('Not found', { status: 404 });
     }
+    if (!ENABLE_LEADERBOARD && matches(LEADERBOARD_PAGE_PREFIXES)) throw redirect(302, '/');
     if (!ENABLE_SLEEP && matches(SLEEP_PAGE_PREFIXES)) throw redirect(302, '/');
     return null;
 }

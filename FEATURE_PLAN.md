@@ -110,7 +110,7 @@
 - [x] Sleep: gate ด้วย `ENABLE_SLEEP` (เดิม unreachable อยู่แล้ว) — โค้ดยังอยู่ ไม่ลบ
 - [x] Nudge: gate ผ่าน `SOCIAL_API_PREFIXES` (API คืน 404 เมื่อ social ปิด)
 - [x] แก้ลิงก์ค้าง "Back to Community" ใน settings → "Back to Home"
-- [ ] (ค้าง — ต้องผู้ใช้อนุมัติลบ) ลบไฟล์ dev ที่ค้างใน working dir: `test-emoji/`, `TEST_CHECKIN.js`, `diagnose-checkin.mjs`, `ngrok_*.log`, `client_secret_*.json`, `test-*.{ts,mjs}` — auto-mode บล็อก `rm` ของไฟล์ untracked ที่ผมตั้งเอง
+- [x] ลบไฟล์ dev ที่ค้าง (`TEST_CHECKIN.js`, `diagnose-checkin.mjs`, `test-*`, ฯลฯ) — เคลียร์แล้วใน commit `ed02cff`
 
 > 📌 **`/log` ไม่ใช่ orphan:** ตรวจแล้ว timer ลิงก์ไป `/log?duration=...&type=...` เป็นหน้าบันทึกหลังจบเซสชัน = core logging flow **เก็บไว้ ห้ามรวม/ลบ** (แก้สมมติฐานเดิมในแผน)
 
@@ -119,13 +119,16 @@
 ### Phase 1 — Deepen the Core (1–2 สัปดาห์) · retention
 - [x] **Breathing patterns** พร้อม visual guide ในหน้า timer (5.1 ส่วนแรก) — Box 4·4·4·4 / 4·7·8 / 4·6, วงกลม+ring ขยาย-หดตามจังหวะ, label หายใจเข้า/กลั้น/ออก, จำค่าใน localStorage ✅ ผ่าน build
 - [x] **Onboarding flow** 3 หน้าจอ (5.3) → activation — `/welcome`: เลือกเป้าหมาย (คลายเครียด/นอนหลับ/โฟกัส) → ผูก breathing pattern+เสียง+เป้าหมายนาที → first session. บันทึก daily goal ผ่าน `POST /api/settings/goal`. trigger อัตโนมัติเมื่อ user ใหม่ (0 session) ✅ ผ่าน build
-- [ ] **Daily reminder** ที่ทำงานจริง: PWA notification + "streak กำลังหลุด" (5.2) — มี `DailyReminder.svelte` อยู่แล้ว ต้องตรวจ/wire ให้ทำงานจริง
-- [ ] Empty states + resume button (5.4)
+- [x] **Streak-at-risk nudge** (5.2 ส่วน in-app) — home not-meditated card ขึ้น "🔥 อย่าให้ streak X วันหลุด" เมื่อ streak>0 ✅ ผ่าน build. *นี่คือ retention nudge ที่เชื่อถือได้จริง ไม่ต้องมี infra*
+- [x] **Daily reminder** wired — แก้ `DailyReminder.svelte` (เดิม orphaned + ยิงแค่ test) ให้ schedule จริงด้วย setTimeout ของวันนี้ + re-arm ตอนเปิดแอป + แก้ icon path เสีย, แล้ววางใน `/settings/profile` ให้เข้าถึงได้ ✅ ผ่าน build
+  - ℹ️ **อัปเดต:** DailyReminder ตัวนี้ทำงานตอนแอปเปิดอยู่ (local). ระหว่างเซสชันมีการเพิ่ม **server-side Web Push จริง (VAPID)** เข้ามาแล้ว (commit `e24ded6`: `src/lib/server/push.ts`, `api/push/*`, ตาราง `push_subscriptions`, service worker มี push handler, toggle ใน settings). ทั้งสองตัวทำงานคนละหน้าที่ (local time-reminder ↔ event push) — **follow-up:** ต่อ daily meditation reminder + weekly summary เข้ากับ push infra ที่มีแล้ว ผ่าน Vercel cron
+- [x] Empty states + resume button (5.4) — ตรวจแล้ว home มี today-status card + CTA ไป `/timer` ทั้งสองสถานะ (resume มีอยู่แล้ว), recent-sessions empty state ดีอยู่แล้ว, user ใหม่ (0 session) ถูกส่งเข้า onboarding ก่อน
 
 ### Phase 2 — Content & Habit (2–4 สัปดาห์)
-- [ ] **Guided sessions** TH 3–5 บท (อัดเสียง/TTS) ในหน้า timer (5.1 ส่วนสอง)
-- [ ] **Weekly insight summary** push ("สัปดาห์นี้คุณนั่งสมาธิ X นาที, อารมณ์ดีขึ้น Y%")
-- [ ] วัดผล retention (D1/D7/D30) ก่อนตัดสินใจเปิด social
+> 🔀 **งานที่ทำคู่ขนานระหว่างเซสชัน (commits `38550fc`–`0f36cc4`):** shareable session card (timer), tag-frequency chart (insights), recent-activity feed (community), Web Push (VAPID). ดู `TASK.md` ประกอบ
+- [ ] **Guided sessions** TH 3–5 บท (อัดเสียง/TTS) ในหน้า timer (5.1 ส่วนสอง) — *ยังต้องตัดสินใจ: TTS ผ่าน MCP vs อัดเสียง + สคริปต์ + เสียง*
+- [ ] **Weekly insight summary** — แกนข้อมูลมีในหน้า Insights แล้ว (trend/avg mood/best time); เหลือทำเป็น **push สรุปรายสัปดาห์** ผ่าน push infra ที่มีแล้ว
+- [ ] วัดผล retention (D1/D7/D30) — *ยังต้องเลือก provider (PostHog/Plausible) ก่อนใส่ event tracking*
 
 ### Phase 3 — Social (เปิดเมื่อถึงเกณฑ์ ไม่ใช่ตามเวลา)
 - เกณฑ์เปิด: **WAU ≥ 50** และ **D7 retention ≥ 25%**

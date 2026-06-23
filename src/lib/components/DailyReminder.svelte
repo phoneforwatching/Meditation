@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { t } from "$lib/i18n";
 
   let permission = "default";
   let reminderTime = "";
   let isEnabled = false;
+  let pendingTimer: ReturnType<typeof setTimeout> | undefined;
 
   onMount(() => {
     if ("Notification" in window) {
@@ -14,7 +15,12 @@
     if (savedTime) {
       reminderTime = savedTime;
       isEnabled = true;
+      armToday(savedTime);
     }
+  });
+
+  onDestroy(() => {
+    if (pendingTimer) clearTimeout(pendingTimer);
   });
 
   async function requestPermission() {
@@ -24,8 +30,32 @@
     }
     const result = await Notification.requestPermission();
     permission = result;
-    if (result === "granted") {
-      // Permission granted
+  }
+
+  function fire() {
+    if (permission !== "granted") return;
+    new Notification($t("reminder.title"), {
+      body: $t("reminder.fireBody"),
+      icon: "/icon-192.png",
+    });
+  }
+
+  // Arm a notification for today's reminder time if it is still ahead. Reliable
+  // only while the app stays open — a true background reminder needs server push
+  // (not yet set up), so we keep expectations honest in the UI copy below.
+  function armToday(time: string) {
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = undefined;
+    if (permission !== "granted") return;
+
+    const [h, m] = time.split(":").map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return;
+
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    const delay = target.getTime() - Date.now();
+    if (delay > 0) {
+      pendingTimer = setTimeout(fire, delay);
     }
   }
 
@@ -33,12 +63,13 @@
     if (!reminderTime) return;
     localStorage.setItem("dailyReminderTime", reminderTime);
     isEnabled = true;
+    armToday(reminderTime);
 
-    // Show a test notification
+    // Confirm to the user that the reminder is set.
     if (permission === "granted") {
       new Notification($t("reminder.testTitle"), {
         body: `${$t("reminder.testBody")} ${reminderTime}`,
-        icon: "/favicon.png",
+        icon: "/icon-192.png",
       });
     }
   }
@@ -47,6 +78,8 @@
     localStorage.removeItem("dailyReminderTime");
     reminderTime = "";
     isEnabled = false;
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = undefined;
   }
 </script>
 

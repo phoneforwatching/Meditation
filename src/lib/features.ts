@@ -8,11 +8,13 @@
 //
 // Gate to re-open social: WAU >= 50 and D7 retention >= 25% (see FEATURE_PLAN.md).
 
-export const ENABLE_SOCIAL = false; // community, leaderboard, chat, nudge, profiles, notifications
+export const ENABLE_SOCIAL = false; // community, chat, nudge, profiles, notifications
+export const ENABLE_LEADERBOARD = true; // ranking — decoupled from full social bundle
 export const ENABLE_SLEEP = false; // sleep tracking vertical (currently unreachable in UI)
 
 // Page route prefixes gated behind each flag. Direct navigation to these while
 // the flag is off redirects home; matching API prefixes return 404.
-export const SOCIAL_PAGE_PREFIXES = ['/community', '/leaderboard', '/chat', '/profile'];
+export const SOCIAL_PAGE_PREFIXES = ['/community', '/chat', '/profile'];
 export const SOCIAL_API_PREFIXES = ['/api/nudge', '/api/messages', '/api/community'];
+export const LEADERBOARD_PAGE_PREFIXES = ['/leaderboard'];
 export const SLEEP_PAGE_PREFIXES = ['/sleep'];

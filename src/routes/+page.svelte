@@ -467,9 +467,17 @@
                 <p class="text-lg font-bold text-slate">
                   {$t("dashboard.notMeditatedToday")}
                 </p>
-                <p class="text-sm text-slate/70">
-                  {$t("dashboard.keepStreak")}
-                </p>
+                {#if data.streak > 0}
+                  <p class="text-sm font-semibold text-amber-600">
+                    {$locale === "th"
+                      ? `🔥 อย่าให้ streak ${data.streak} วันหลุดนะ — นั่งสักนิดวันนี้`
+                      : `🔥 Don't break your ${data.streak}-day streak — sit for a moment today`}
+                  </p>
+                {:else}
+                  <p class="text-sm text-slate/70">
+                    {$t("dashboard.keepStreak")}
+                  </p>
+                {/if}
                 <div class="flex flex-wrap gap-2">
                   <span
                     class="rounded-full bg-peach/15 px-3 py-1 text-xs font-semibold text-peach"

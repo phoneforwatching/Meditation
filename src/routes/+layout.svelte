@@ -3,7 +3,7 @@
   import "../app.css";
   import { page } from "$app/stores";
   import { locale, t } from "$lib/i18n";
-  import { ENABLE_SOCIAL } from "$lib/features";
+  import { ENABLE_SOCIAL, ENABLE_LEADERBOARD } from "$lib/features";
   import type { RealtimeChannel } from "@supabase/supabase-js";
 
   async function logout() {
@@ -449,6 +449,34 @@
             <span class="text-xs font-medium">{$t("nav.insights")}</span>
           </a>
 
+          {#if ENABLE_LEADERBOARD}
+            <!-- Leaderboard -->
+            <a
+              href="/leaderboard"
+              class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
+                '/leaderboard',
+                isDarkPage,
+                $page.url.pathname,
+              )}"
+            >
+              <span class="text-2xl">🏆</span>
+              <span class="text-xs font-medium">{$t("nav.leaderboard")}</span>
+            </a>
+          {:else}
+            <!-- History -->
+            <a
+              href="/history"
+              class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
+                '/history',
+                isDarkPage,
+                $page.url.pathname,
+              )}"
+            >
+              <span class="text-2xl">📅</span>
+              <span class="text-xs font-medium">{$t("nav.history")}</span>
+            </a>
+          {/if}
+
           {#if ENABLE_SOCIAL}
             <!-- Community -->
             <a
@@ -461,19 +489,6 @@
             >
               <span class="text-2xl">👥</span>
               <span class="text-xs font-medium">{$t("nav.community")}</span>
-            </a>
-
-            <!-- Leaderboard -->
-            <a
-              href="/leaderboard"
-              class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
-                '/leaderboard',
-                isDarkPage,
-                $page.url.pathname,
-              )}"
-            >
-              <span class="text-2xl">🏆</span>
-              <span class="text-xs font-medium">{$t("nav.leaderboard")}</span>
             </a>
 
             <!-- Chat -->
@@ -494,19 +509,6 @@
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                 </span>
               {/if}
-            </a>
-          {:else}
-            <!-- History -->
-            <a
-              href="/history"
-              class="flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all {getNavItemClass(
-                '/history',
-                isDarkPage,
-                $page.url.pathname,
-              )}"
-            >
-              <span class="text-2xl">📅</span>
-              <span class="text-xs font-medium">{$t("nav.history")}</span>
             </a>
           {/if}
         </div>

@@ -158,7 +158,10 @@ const translations = {
             user: 'User',
             time: 'Total Time',
             minutes: 'MINS',
-            empty: 'No data yet.'
+            empty: 'No data yet.',
+            tabWeekly: 'This Week',
+            tabAllTime: 'All Time',
+            weeklySubtitle: 'Minutes meditated in the last 7 days.'
         },
         profile: {
             meditation: 'Meditation',
@@ -232,7 +235,8 @@ const translations = {
             note: 'Note: On mobile, ensure the app is added to home screen for best results.',
             blocked: 'Notifications are blocked. Please enable them in browser settings.',
             testTitle: 'Reminder Set!',
-            testBody: 'You will be reminded daily at'
+            testBody: 'You will be reminded daily at',
+            fireBody: 'Time to take a mindful moment 🧘'
         },
         log: {
             title: 'Log Session',
@@ -517,7 +521,10 @@ const translations = {
             user: 'ผู้ใช้งาน',
             time: 'เวลาสะสม',
             minutes: 'นาที',
-            empty: 'ยังไม่มีข้อมูล'
+            empty: 'ยังไม่มีข้อมูล',
+            tabWeekly: 'สัปดาห์นี้',
+            tabAllTime: 'ตลอดกาล',
+            weeklySubtitle: 'นาทีทำสมาธิใน 7 วันที่ผ่านมา'
         },
         profile: {
             meditation: 'การทำสมาธิ',
@@ -591,7 +598,8 @@ const translations = {
             note: 'หมายเหตุ: บนมือถือ ควรเพิ่มแอพลงในหน้าจอหลักเพื่อผลลัพธ์ที่ดีที่สุด',
             blocked: 'การแจ้งเตือนถูกปิดกั้น โปรดเปิดในตั้งค่าเบราว์เซอร์',
             testTitle: 'ตั้งค่าแจ้งเตือนแล้ว!',
-            testBody: 'คุณจะได้รับการแจ้งเตือนทุกวันเวลา'
+            testBody: 'คุณจะได้รับการแจ้งเตือนทุกวันเวลา',
+            fireBody: 'ได้เวลาพักใจสักครู่ 🧘'
         },
         log: {
             title: 'บันทึกเซสชัน',
