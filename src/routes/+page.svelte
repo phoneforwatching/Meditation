@@ -532,14 +532,16 @@
       <!-- Quick Stats -->
       <div class="grid grid-cols-3 gap-3 sm:gap-4">
         <article
-          class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md shadow-sage/5"
+          class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md shadow-sage/5 opacity-0 animate-fade-in-up animate-fill-both transition-shadow duration-200 hover:shadow-lg"
+          style="animation-delay: 0ms; animation-duration: 420ms"
         >
           <p class="mb-2 text-xl">🔥</p>
           <p class="text-2xl font-bold leading-none text-sage sm:text-3xl">{data.streak}</p>
           <p class="mt-2 text-xs font-medium text-slate/60 sm:text-sm">{$t("dashboard.streak")}</p>
         </article>
         <article
-          class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md shadow-sage/5"
+          class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md shadow-sage/5 opacity-0 animate-fade-in-up animate-fill-both transition-shadow duration-200 hover:shadow-lg"
+          style="animation-delay: 90ms; animation-duration: 420ms"
         >
           <p class="mb-2 text-xl">⏱️</p>
           <p class="text-2xl font-bold leading-none text-sage sm:text-3xl">
@@ -550,7 +552,8 @@
           </p>
         </article>
         <article
-          class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md shadow-sage/5"
+          class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md shadow-sage/5 opacity-0 animate-fade-in-up animate-fill-both transition-shadow duration-200 hover:shadow-lg"
+          style="animation-delay: 180ms; animation-duration: 420ms"
         >
           <p class="mb-2 text-xl">🧘</p>
           <p class="text-2xl font-bold leading-none text-sage sm:text-3xl">{data.totalSessions}</p>
@@ -1063,9 +1066,10 @@
         </div>
       {:else}
         <div class="space-y-3">
-          {#each data.recentSessions as session}
+          {#each data.recentSessions as session, i}
             <div
-              class="group bg-gradient-to-r from-white via-cream to-white/50 rounded-xl border border-white/40 p-4 flex items-center gap-4 hover:border-sage/20 hover:shadow-md transition-all duration-300"
+              class="group bg-gradient-to-r from-white via-cream to-white/50 rounded-xl border border-white/40 p-4 flex items-center gap-4 hover:border-sage/20 hover:shadow-md transition-all duration-300 opacity-0 animate-fade-in-up animate-fill-both"
+              style="animation-delay: {Math.min(i, 8) * 60}ms; animation-duration: 400ms"
             >
               <!-- Session Icon -->
               <div
