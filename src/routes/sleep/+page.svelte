@@ -288,7 +288,7 @@
                                         {formatTime(log.wakeTime)}
                                     </div>
                                     <div
-                                        class="text-yellow-200 text-[10px] mt-1"
+                                        class="text-yellow-200 text-2xs mt-1"
                                     >
                                         {$t("sleep.quality")}: {log.quality}/5
                                     </div>
@@ -414,7 +414,7 @@
                                 {Math.floor(log.durationMinutes / 60)}h {log.durationMinutes %
                                     60}m
                             </div>
-                            <div class="flex gap-0.5 justify-end text-[10px]">
+                            <div class="flex gap-0.5 justify-end text-2xs">
                                 {#each Array(log.quality) as _}
                                     <span>✨</span>
                                 {/each}

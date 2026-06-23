@@ -2,6 +2,8 @@
   import { enhance } from "$app/forms";
   import { page } from "$app/stores";
   import { t } from "$lib/i18n";
+  import { Button } from "$lib/components/ui/button";
+  import { Textarea } from "$lib/components/ui/textarea";
 
   $: durationParam = $page.url.searchParams.get("duration");
   $: isAutoDuration = !!durationParam;
@@ -150,7 +152,7 @@
             on:click={() => (mood = m)}
           >
             <span class="text-3xl">{moodEmojis[m]}</span>
-            <span class="text-[10px] font-medium text-slate/70">
+            <span class="text-2xs font-medium text-slate/70">
               {$t(`log.moodLabels.${m}`)}
             </span>
           </button>
@@ -183,26 +185,21 @@
     </fieldset>
 
     <!-- Notes -->
-    <div class="space-y-2">
-      <label class="block text-sm font-medium text-slate" for="notes">
-        {$t("log.notes")}
-      </label>
-      <textarea
-        id="notes"
-        name="notes"
-        rows="3"
-        class="w-full rounded-lg border-slate/20 focus:border-sage focus:ring-sage"
-        placeholder={$t("log.reflectPrompt")}
-      ></textarea>
-    </div>
+    <Textarea
+      label={$t("log.notes")}
+      name="notes"
+      rows={3}
+      placeholder={$t("log.reflectPrompt")}
+    />
 
-    <button
+    <Button
       type="submit"
       disabled={loading}
-      class="w-full bg-sage hover:bg-sage/90 text-white font-bold py-3 rounded-xl shadow-md transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+      size="xl"
+      class="w-full font-semibold shadow-md active:scale-95"
     >
       {loading ? $t("log.saving") : $t("log.save")}
-    </button>
+    </Button>
 
     <div class="text-center">
       <a href="/" class="text-sm text-slate/50 hover:text-sage"

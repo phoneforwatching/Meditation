@@ -29,7 +29,7 @@
             <div class="flex items-center gap-2">
               <h2 class="font-bold text-slate truncate">{s.title[lang]}</h2>
               <span
-                class="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-semibold text-slate/70"
+                class="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-2xs font-semibold text-slate/70"
               >
                 {s.durationMinutes} {$t("timer.minutes")}
               </span>

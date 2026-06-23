@@ -169,8 +169,8 @@
         {#each messages as msg}
             <div
                 class="flex {msg.senderId === data.currentUserId
-                    ? 'justify-end'
-                    : 'justify-start'}"
+                    ? 'justify-end animate-slide-in-right'
+                    : 'justify-start animate-slide-in-left'}"
             >
                 <div
                     class="max-w-[70%] rounded-2xl px-4 py-2 {msg.senderId ===
@@ -180,7 +180,7 @@
                 >
                     <div class="break-words">{msg.content}</div>
                     <div class="flex items-center justify-end gap-1 mt-1">
-                        <div class="text-[10px] opacity-60">
+                        <div class="text-2xs opacity-60">
                             {msg.createdAt
                                 ? new Date(msg.createdAt).toLocaleTimeString(
                                       [],
@@ -190,7 +190,7 @@
                         </div>
                         {#if msg.senderId === data.currentUserId}
                             <div
-                                class="text-[10px] opacity-60"
+                                class="text-2xs opacity-60"
                                 title={msg.isRead ? $t("chat.read") : $t("chat.sent")}
                             >
                                 {msg.isRead ? "✓✓" : "✓"}

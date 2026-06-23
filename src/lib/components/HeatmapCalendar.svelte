@@ -75,7 +75,7 @@
 
     <div class="flex gap-1">
       <!-- Day Labels -->
-      <div class="flex flex-col justify-between text-[10px] text-slate/40 pr-2 py-1 h-[100px]">
+      <div class="flex flex-col justify-between text-2xs text-slate/40 pr-2 py-1 h-[100px]">
         <div>Mon</div>
         <div>Wed</div>
         <div>Fri</div>

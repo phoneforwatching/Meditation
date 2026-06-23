@@ -104,7 +104,7 @@
                                     {user.displayName || "Anonymous"}
                                     {#if isMe}
                                         <span
-                                            class="text-[10px] bg-sage text-white px-1.5 py-0.5 rounded-full"
+                                            class="text-2xs bg-sage text-white px-1.5 py-0.5 rounded-full"
                                             >YOU</span
                                         >
                                     {/if}
@@ -122,7 +122,7 @@
                             <div class="font-bold text-sage">
                                 {user.totalMinutes}
                             </div>
-                            <div class="text-[10px] text-slate/40 uppercase">
+                            <div class="text-2xs text-slate/40 uppercase">
                                 {$t("leaderboard.minutes")}
                             </div>
                         </div>

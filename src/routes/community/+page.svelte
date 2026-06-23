@@ -390,8 +390,11 @@
           {$locale === "th" ? "ความเคลื่อนไหวล่าสุด" : "Recent activity"}
         </h2>
         <div class="max-h-72 space-y-2.5 overflow-y-auto pr-1">
-          {#each data.activity as item}
-            <div class="flex items-center gap-3">
+          {#each data.activity as item, i}
+            <div
+              class="flex items-center gap-3 opacity-0 animate-fade-in animate-fill-both"
+              style="animation-delay: {Math.min(i, 10) * 50}ms; animation-duration: 350ms"
+            >
               <div
                 class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sage/10"
               >
@@ -425,7 +428,7 @@
                   {/if}
                 {/if}
               </p>
-              <span class="shrink-0 text-[10px] text-slate/40">
+              <span class="shrink-0 text-2xs text-slate/40">
                 {relativeTime(item.at)}
               </span>
             </div>
@@ -588,7 +591,7 @@
                 />
               {:else}
                 <div
-                  class="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center text-[10px] border border-white/50"
+                  class="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center text-2xs border border-white/50"
                 >
                   {(user.displayName || "A")[0].toUpperCase()}
                 </div>

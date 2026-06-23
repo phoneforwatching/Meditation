@@ -747,7 +747,7 @@
             <!-- Achievement Unlocked Celebration -->
             {#if badge.achieved}
               <div
-                class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center text-[10px] text-white font-bold shadow-lg"
+                class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center text-2xs text-white font-bold shadow-lg"
               >
                 ✨
               </div>
@@ -902,7 +902,7 @@
                 
                 <!-- Minutes indicator -->
                 {#if minutes > 0}
-                  <span class="relative text-[10px] font-bold text-white/90 bg-black/20 px-1.5 py-0.5 rounded-full">
+                  <span class="relative text-2xs font-bold text-white/90 bg-black/20 px-1.5 py-0.5 rounded-full">
                     {minutes}m
                   </span>
                 {:else}
@@ -975,7 +975,7 @@
             <div class="mb-3 flex items-center justify-between">
               <h3 class="text-sm font-bold text-slate">{$t("stats.thisMonth")}</h3>
               {#if monthTotalMinutes === 0}
-                <span class="rounded-full bg-white/60 px-2.5 py-1 text-[11px] font-medium text-slate/55">
+                <span class="rounded-full bg-white/60 px-2.5 py-1 text-2xs font-medium text-slate/55">
                   {$t("stats.noActivityYet")}
                 </span>
               {/if}
@@ -983,15 +983,15 @@
             <div class="grid grid-cols-3 gap-3">
               <div class="rounded-lg border border-white/50 bg-white/70 px-2 py-3 text-center">
                 <div class="text-xl font-bold text-sage">{monthActiveDays}</div>
-                <div class="mt-1 text-[11px] font-medium text-sage/70">{$t("stats.activeDays")}</div>
+                <div class="mt-1 text-2xs font-medium text-sage/70">{$t("stats.activeDays")}</div>
               </div>
               <div class="rounded-lg border border-white/50 bg-white/70 px-2 py-3 text-center">
                 <div class="text-xl font-bold text-sage">{formatMinutes(monthTotalMinutes)}</div>
-                <div class="mt-1 text-[11px] font-medium text-sage/70">{$t("stats.totalMinutes")}</div>
+                <div class="mt-1 text-2xs font-medium text-sage/70">{$t("stats.totalMinutes")}</div>
               </div>
               <div class="rounded-lg border border-white/50 bg-white/70 px-2 py-3 text-center">
                 <div class="text-xl font-bold text-sage">{formatMinutes(monthMaxDaily)}</div>
-                <div class="mt-1 text-[11px] font-medium text-sage/70">{$t("stats.maxDaily")}</div>
+                <div class="mt-1 text-2xs font-medium text-sage/70">{$t("stats.maxDaily")}</div>
               </div>
             </div>
           </div>

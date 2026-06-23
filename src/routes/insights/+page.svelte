@@ -98,7 +98,8 @@
   <div class="grid grid-cols-2 gap-3">
     <!-- Avg Mood -->
     <article
-      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md"
+      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md opacity-0 animate-fade-in-up animate-fill-both"
+      style="animation-delay: 0ms; animation-duration: 450ms"
     >
       <p class="text-xs text-slate/60 mb-1">{$t("insights.avgMood")}</p>
       {#if data.thisWeekAvgMood > 0}
@@ -108,7 +109,7 @@
             >{data.thisWeekAvgMood.toFixed(1)}</span
           >
         </div>
-        <p class="text-[10px] mt-1 {moodDeltaColor}">
+        <p class="text-2xs mt-1 {moodDeltaColor}">
           {moodDelta > 0 ? "+" : ""}{moodDelta.toFixed(1)}
           {$t("insights.vsLastWeek")} &middot; {moodDeltaLabel}
         </p>
@@ -119,7 +120,8 @@
 
     <!-- Most Common Type -->
     <article
-      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md"
+      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md opacity-0 animate-fade-in-up animate-fill-both"
+      style="animation-delay: 70ms; animation-duration: 450ms"
     >
       <p class="text-xs text-slate/60 mb-1">{$t("insights.mostCommonType")}</p>
       {#if topType}
@@ -129,7 +131,7 @@
             >{$t(`log.types.${topType.sessionType}`)}</span
           >
         </div>
-        <p class="text-[10px] mt-1 text-slate/50">
+        <p class="text-2xs mt-1 text-slate/50">
           {topType.count}
           {$t("insights.sessions")}
         </p>
@@ -140,7 +142,8 @@
 
     <!-- Best Time of Day -->
     <article
-      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md"
+      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md opacity-0 animate-fade-in-up animate-fill-both"
+      style="animation-delay: 140ms; animation-duration: 450ms"
     >
       <p class="text-xs text-slate/60 mb-1">{$t("insights.bestTimeOfDay")}</p>
       {#if data.insights.bestTimeOfDay}
@@ -150,7 +153,7 @@
           >
           <span class="text-sm font-bold text-slate">{timeBucketLabel}</span>
         </div>
-        <p class="text-[10px] mt-1 text-slate/50">
+        <p class="text-2xs mt-1 text-slate/50">
           mood {data.insights.bestTimeOfDayMood}/5
         </p>
       {:else}
@@ -160,13 +163,14 @@
 
     <!-- Period Totals -->
     <article
-      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md"
+      class="rounded-2xl border border-white/50 bg-gradient-to-br from-white to-cream p-4 shadow-md opacity-0 animate-fade-in-up animate-fill-both"
+      style="animation-delay: 210ms; animation-duration: 450ms"
     >
       <p class="text-xs text-slate/60 mb-1">{$t("insights.totalThisPeriod")}</p>
       <p class="text-xl font-bold text-sage">
         {data.periodTotals.totalSessions}
       </p>
-      <p class="text-[10px] text-slate/50">
+      <p class="text-2xs text-slate/50">
         {$t("insights.sessions")} &middot; {data.periodTotals.totalMinutes}
         {$t("insights.minutes")}
       </p>
@@ -176,14 +180,16 @@
   <!-- Streak Cards -->
   <div class="grid grid-cols-2 gap-3">
     <article
-      class="rounded-2xl border border-sage/20 bg-gradient-to-br from-sage/5 to-white p-5 shadow-md text-center"
+      class="rounded-2xl border border-sage/20 bg-gradient-to-br from-sage/5 to-white p-5 shadow-md text-center opacity-0 animate-fade-in-up animate-fill-both"
+      style="animation-delay: 280ms; animation-duration: 450ms"
     >
       <p class="text-xs text-slate/60 mb-1">{$t("insights.currentStreak")}</p>
       <p class="text-3xl font-bold text-sage">{data.currentStreak}</p>
       <p class="text-xs text-slate/50">{$t("insights.days")}</p>
     </article>
     <article
-      class="rounded-2xl border border-sage/20 bg-gradient-to-br from-sage/5 to-white p-5 shadow-md text-center"
+      class="rounded-2xl border border-sage/20 bg-gradient-to-br from-sage/5 to-white p-5 shadow-md text-center opacity-0 animate-fade-in-up animate-fill-both"
+      style="animation-delay: 350ms; animation-duration: 450ms"
     >
       <p class="text-xs text-slate/60 mb-1">{$t("insights.bestStreak")}</p>
       <p class="text-3xl font-bold text-sage">{data.bestStreak}</p>
@@ -273,7 +279,7 @@
               {moodEmoji(item.avgMood)}
               {item.avgMood.toFixed(1)}
             </p>
-            <p class="text-[10px] text-slate/40">
+            <p class="text-2xs text-slate/40">
               {item.count}
               {$t("insights.sessions")}
             </p>

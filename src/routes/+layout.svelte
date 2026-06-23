@@ -4,6 +4,7 @@
   import { page } from "$app/stores";
   import { locale, t } from "$lib/i18n";
   import { ENABLE_SOCIAL, ENABLE_LEADERBOARD } from "$lib/features";
+  import { theme, applyRouteTheme } from "$lib/stores/theme";
   import type { RealtimeChannel } from "@supabase/supabase-js";
 
   async function logout() {
@@ -15,8 +16,10 @@
     locale.update((l) => (l === "en" ? "th" : "en"));
   }
 
-  // Determine if current page needs dark theme (for sleep page)
-  $: isDarkPage = $page.url.pathname === "/sleep";
+  // Theme is driven by the store. The /sleep route forces dark without
+  // overwriting the user's saved preference; other routes restore it.
+  $: applyRouteTheme($page.url.pathname === "/sleep");
+  $: isDarkPage = $theme === "dark";
   $: isAuthPage =
     $page.url.pathname === "/login" ||
     $page.url.pathname === "/signup" ||
@@ -103,6 +106,17 @@
       clearTimeout(timer);
     }
     launchTimers = [];
+  }
+
+  function skipLaunchScreen() {
+    if (!showLaunchScreen || launchScreenExiting) return;
+    clearLaunchTimers();
+    launchScreenExiting = true;
+    launchTimers.push(
+      setTimeout(() => {
+        showLaunchScreen = false;
+      }, 520),
+    );
   }
 
   function startLaunchSequence() {
@@ -212,9 +226,18 @@
 
 {#if showLaunchScreen}
   <div
-    class="launch-screen"
+    class="launch-screen launch-screen--interactive"
     class:launch-screen--exit={launchScreenExiting}
-    aria-hidden="true"
+    role="button"
+    tabindex="0"
+    aria-label={$locale === "th" ? "ข้ามอินโทร" : "Skip intro"}
+    on:click={skipLaunchScreen}
+    on:keydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        skipLaunchScreen();
+      }
+    }}
   >
     <div class="launch-screen__backdrop"></div>
     <div class="launch-screen__mesh"></div>
@@ -257,6 +280,9 @@
       </div>
 
       <p class="launch-phase">{launchStepLabel}</p>
+      <p class="launch-skip-hint">
+        {$locale === "th" ? "แตะเพื่อข้าม" : "Tap to skip"}
+      </p>
     </div>
   </div>
 {/if}
@@ -336,7 +362,7 @@
                           <div class="text-slate/60 text-xs">
                             {note.message}
                           </div>
-                          <div class="text-slate/40 text-[10px] mt-1">
+                          <div class="text-slate/40 text-2xs mt-1">
                             {new Date(note.createdAt).toLocaleString()}
                           </div>
                         </div>
@@ -396,7 +422,11 @@
         </a>
       </div>
     {/if}
-    <slot />
+    {#key $page.url.pathname}
+      <div class="animate-fade-in" style="animation-duration: 300ms">
+        <slot />
+      </div>
+    {/key}
   </main>
 
   <!-- Bottom Navigation Bar -->
@@ -504,7 +534,7 @@
               <span class="text-xs font-medium">{$t("nav.chat")}</span>
               {#if unreadMessageCount > 0}
                 <span
-                  class="absolute -top-1 right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white min-w-[1.25rem] text-center"
+                  class="absolute -top-1 right-1 bg-red-500 text-white text-2xs font-bold px-1.5 py-0.5 rounded-full border-2 border-white min-w-[1.25rem] text-center"
                 >
                   {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                 </span>

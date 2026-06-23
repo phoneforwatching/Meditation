@@ -87,7 +87,7 @@
 
                     {#if isMe}
                         <div
-                            class="absolute -top-2 -left-2 bg-sage text-white text-[10px] px-2 py-0.5 rounded-full shadow-md font-bold animate-pulse"
+                            class="absolute -top-2 -left-2 bg-sage text-white text-2xs px-2 py-0.5 rounded-full shadow-md font-bold animate-pulse"
                         >
                             YOU
                         </div>
@@ -120,7 +120,7 @@
                             {user.totalMinutes}
                         </span>
                         <span
-                            class="text-[10px] text-slate/40 uppercase block -mt-1"
+                            class="text-2xs text-slate/40 uppercase block -mt-1"
                         >
                             {$t("leaderboard.minutes")}
                         </span>

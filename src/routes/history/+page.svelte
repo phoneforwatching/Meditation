@@ -1,5 +1,8 @@
 <script lang="ts">
   import { locale, t } from "$lib/i18n";
+  import { Input } from "$lib/components/ui/input";
+  import { Select } from "$lib/components/ui/select";
+  import EmptyState from "$lib/components/EmptyState.svelte";
   import type { PageData } from "./$types";
 
   export let data: PageData;
@@ -9,6 +12,11 @@
   let endDate = data.filters.end;
   let minMinutes = data.filters.min;
   let maxMinutes = data.filters.max;
+
+  $: typeOptions = [
+    { value: "all", label: $t("history.allTypes") },
+    ...data.sessionTypes.map((s: string) => ({ value: s, label: s })),
+  ];
 
   function getSessionIcon(type: string) {
     if (type === "Focus") return "📍";
@@ -92,63 +100,45 @@
       method="GET"
       class="mb-5 grid grid-cols-1 gap-3 rounded-xl border border-sage/20 bg-sage/5 p-3 sm:grid-cols-2 lg:grid-cols-6"
     >
-      <label class="flex flex-col gap-1 lg:col-span-2">
-        <span class="text-xs font-semibold text-slate/70">{$t("history.type")}</span>
-        <select
-          name="type"
-          bind:value={selectedType}
-          class="min-h-11 rounded-lg border border-slate/20 bg-white px-3 text-sm text-slate focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/25"
-        >
-          <option value="all">{$t("history.allTypes")}</option>
-          {#each data.sessionTypes as sessionType}
-            <option value={sessionType}>{sessionType}</option>
-          {/each}
-        </select>
-      </label>
+      <Select
+        label={$t("history.type")}
+        name="type"
+        bind:value={selectedType}
+        options={typeOptions}
+        class="lg:col-span-2"
+      />
 
-      <label class="flex flex-col gap-1">
-        <span class="text-xs font-semibold text-slate/70">{$t("history.from")}</span>
-        <input
-          type="date"
-          name="start"
-          bind:value={startDate}
-          class="min-h-11 rounded-lg border border-slate/20 bg-white px-3 text-sm text-slate focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/25"
-        />
-      </label>
+      <Input
+        label={$t("history.from")}
+        type="date"
+        name="start"
+        bind:value={startDate}
+      />
 
-      <label class="flex flex-col gap-1">
-        <span class="text-xs font-semibold text-slate/70">{$t("history.to")}</span>
-        <input
-          type="date"
-          name="end"
-          bind:value={endDate}
-          class="min-h-11 rounded-lg border border-slate/20 bg-white px-3 text-sm text-slate focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/25"
-        />
-      </label>
+      <Input
+        label={$t("history.to")}
+        type="date"
+        name="end"
+        bind:value={endDate}
+      />
 
-      <label class="flex flex-col gap-1">
-        <span class="text-xs font-semibold text-slate/70">{$t("history.minMinutes")}</span>
-        <input
-          type="number"
-          min="1"
-          name="min"
-          bind:value={minMinutes}
-          placeholder="0"
-          class="min-h-11 rounded-lg border border-slate/20 bg-white px-3 text-sm text-slate focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/25"
-        />
-      </label>
+      <Input
+        label={$t("history.minMinutes")}
+        type="number"
+        min="1"
+        name="min"
+        bind:value={minMinutes}
+        placeholder="0"
+      />
 
-      <label class="flex flex-col gap-1">
-        <span class="text-xs font-semibold text-slate/70">{$t("history.maxMinutes")}</span>
-        <input
-          type="number"
-          min="1"
-          name="max"
-          bind:value={maxMinutes}
-          placeholder="999"
-          class="min-h-11 rounded-lg border border-slate/20 bg-white px-3 text-sm text-slate focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/25"
-        />
-      </label>
+      <Input
+        label={$t("history.maxMinutes")}
+        type="number"
+        min="1"
+        name="max"
+        bind:value={maxMinutes}
+        placeholder="999"
+      />
 
       <div class="flex gap-2 sm:col-span-2 lg:col-span-6">
         <button
@@ -167,14 +157,19 @@
     </form>
 
     {#if data.sessions.length === 0}
-      <div class="rounded-xl border border-earth/20 bg-white/70 px-4 py-10 text-center">
-        <p class="text-slate/70">{$t("history.empty")}</p>
-      </div>
+      <EmptyState
+        icon="🍃"
+        title={$t("history.empty")}
+        action={data.hasActiveFilters
+          ? { label: $t("history.clear"), href: "/history" }
+          : { label: $t("dashboard.meditate"), href: "/timer" }}
+      />
     {:else}
       <div class="space-y-3">
-        {#each data.sessions as session}
+        {#each data.sessions as session, i}
           <article
-            class="rounded-xl border border-white/40 bg-gradient-to-r from-white via-cream to-white/60 p-4"
+            class="rounded-xl border border-white/40 bg-gradient-to-r from-white via-cream to-white/60 p-4 opacity-0 animate-fade-in-up animate-fill-both"
+            style="animation-delay: {Math.min(i, 12) * 55}ms; animation-duration: 400ms"
           >
             <div class="mb-2 flex items-start justify-between gap-3">
               <div class="min-w-0">
@@ -209,7 +204,7 @@
             {#if session.tags}
               <div class="flex flex-wrap gap-1 mt-2">
                 {#each session.tags.split(",") as tag}
-                  <span class="rounded-full bg-sage/10 px-2 py-0.5 text-[10px] font-medium text-sage">
+                  <span class="rounded-full bg-sage/10 px-2 py-0.5 text-2xs font-medium text-sage">
                     {$t(`log.tag.${tag}`)}
                   </span>
                 {/each}

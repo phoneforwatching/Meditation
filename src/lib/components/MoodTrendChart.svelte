@@ -54,9 +54,7 @@
   }
 </script>
 
-<div
-  class="bg-white rounded-2xl border border-earth/10 p-4 shadow-sm overflow-x-auto"
->
+<div class="bg-white rounded-2xl border border-earth/10 p-4 shadow-sm">
   <h3 class="text-lg font-bold text-slate mb-4">{$t("insights.moodTrend")}</h3>
 
   {#if moodData.length === 0}
@@ -67,7 +65,8 @@
   {:else}
     <svg
       viewBox="0 0 {WIDTH} {HEIGHT}"
-      class="w-full min-w-[400px]"
+      preserveAspectRatio="xMidYMid meet"
+      class="h-auto w-full"
       role="img"
       aria-label={$t("insights.moodTrend")}
     >

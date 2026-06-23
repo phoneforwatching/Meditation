@@ -55,7 +55,12 @@
 > ไม่ต้องแตะ page ใด — แค่ config + shared tokens  
 > ประมาณ 3–4 ชั่วโมง
 
-### 1.1 Typography Scale (`tailwind.config.js`)
+### 1.1 Typography Scale — ⚠️ implemented in `app.css` (`@theme`), not `tailwind.config.js`
+
+> **v4 note:** โปรเจกต์นี้เป็น **Tailwind CSS v4** (`@import "tailwindcss"` + `@tailwindcss/postcss`)
+> และไม่มี `@config` directive → `tailwind.config.js` **ไม่ถูกโหลด**. theme tokens อยู่ใน
+> `@theme inline` ใน `app.css`. เพราะฉะนั้น `text-2xs` / `text-display` / `--spacing-safe-bottom`
+> ถูกเพิ่มใน `app.css` แทน (ค่าเริ่มต้น xs–9xl มากับ v4 อยู่แล้ว เลยเติมแค่หัวท้าย).
 
 **ปัจจุบัน:** ไม่มี custom fontSize — ใช้ default Tailwind + `text-[10px]` scattered
 
@@ -769,43 +774,64 @@ src/lib/
 ### Week 1 — Foundation (ไม่ break existing pages)
 
 ```
-☐ 1.1  tailwind.config.js — เพิ่ม fontSize scale
-☐ 1.2  app.css — เพิ่ม --ease-calm, --duration-* vars
-☐ 1.3  src/lib/stores/theme.ts — dark mode store
-☐ 1.4  +layout.svelte:19 — เปลี่ยนจาก isDarkPage → theme store
-☐ 1.5  +layout.svelte:99-136 — เพิ่ม skipLaunchScreen()
-☐ 2.1  ui/input/input.svelte
-☐ 2.2  ui/textarea/textarea.svelte
-☐ 2.3  ui/select/select.svelte
+✅ 1.1  app.css @theme — text-2xs / text-display / --font-mono / --spacing-safe-bottom
+        (NOT tailwind.config.js — v4 ไม่โหลด JS config; ดู §1.1)
+✅ 1.2  app.css :root — --ease-calm/--ease-spring, --duration-*, --z-* vars
+✅ 1.3  src/lib/stores/theme.ts — dark mode store (route-aware, light-first default)
+✅ 1.4  +layout.svelte — isDarkPage → theme store ($theme + applyRouteTheme)
+✅ 1.5  +layout.svelte — skipLaunchScreen() + tap/Enter to skip
+✅ 2.1  ui/input/input.svelte (bindable value, $props.id, a11y)
+✅ 2.2  ui/textarea/textarea.svelte
+✅ 2.3  ui/select/select.svelte
 ```
 
 ### Week 2 — Components + Migration
 
 ```
-☐ 2.4  StatCard.svelte
-☐ 2.5  SessionItem.svelte
-☐ 2.6  PageHeader.svelte
-☐ 2.7  SkeletonCard.svelte
-☐ 2.8  EmptyState.svelte
-☐ 4.1  /log — migrate Button + Input
-☐ 4.3  /timer — Button consistency
-☐ 4.4  /insights — MoodTrendChart mobile fix
+✅ 2.4  StatCard.svelte
+✅ 2.5  SessionItem.svelte
+✅ 2.6  PageHeader.svelte
+✅ 2.7  SkeletonCard.svelte (animate-pulse — animate-shimmer ไม่เหมาะกับ bar ทึบ)
+✅ 2.8  EmptyState.svelte
+✅ 4.1  /log — migrate Button (size="xl") + Textarea
+✅ 4.3  button.svelte — เพิ่ม size="xl" (h-14 rounded-2xl) ; /log ใช้แล้ว
+✅ 4.4  MoodTrendChart — ลบ min-w-[400px]/overflow + preserveAspectRatio
 ```
 
 ### Week 3 — Animation + Polish
 
 ```
-☐ 3.x  /history — stagger animation + EmptyState
-☐ 3.x  /community — post entrance animation
-☐ 3.x  /chat — message bubble animation
-☐ 3.x  /leaderboard — rank list animation
-☐ 3.x  +layout.svelte — page transition {#key}
-☐ 4.5  /sleep — connect theme store
-☐ 4.6  nav — dark mode toggle button
-☐ 5.1  Skeleton loaders (History, Insights, Community)
-☐ 5.2  Focus visible global CSS
-☐ 5.3  prefers-reduced-motion global
+✅ 3.x  /history — stagger animate-fade-in-up + EmptyState + Input/Select filters
+✅ 3.x  /community — activity feed entrance stagger (forest trees มี fly อยู่แล้ว)
+✅ 3.x  /chat — message bubbles animate-slide-in-left/right
+✅ 3.x  /leaderboard — มี in:fade stagger อยู่แล้ว (audit stale) ; แค่ migrate typography
+✅ 3.x  +layout.svelte — page transition {#key $page.url.pathname}
+✅ 4.5  /sleep — เชื่อม theme store (force dark, .dark class active ครั้งแรก)
+⏭️ 4.6  nav — dark mode toggle: **ข้ามตามที่ตัดสินใจ** — non-sleep pages ใช้สีฮาร์ดโค้ด
+        (bg-white/text-slate/bg-cream) + .dark remap --cream/--slate เป็นสีอ่อน →
+        toggle จะทำให้ตัวอักษรมองไม่เห็น. store/กลไกพร้อมแล้วสำหรับ full dark pass ในอนาคต.
+🔁 5.1  Skeleton loaders — SkeletonCard สร้างแล้ว; pages ทั้งหมดเป็น SSR (export let data)
+        ไม่มี client loading state จริง → ไม่เพิ่ม dead code. ใช้เมื่อมี client fetch.
+✅ 5.2  Focus visible global CSS — มีอยู่แล้ว; เปลี่ยนเป็น var(--primary) (ตาม theme)
+✅ 5.3  prefers-reduced-motion global — มีอยู่แล้วใน app.css ครบ
 ```
+
+---
+
+## Status — 2026-06-23 (implemented)
+
+ทุก phase เสร็จ ยกเว้น **4.6 (global dark toggle)** ที่ข้ามโดยตั้งใจ (ดูเหตุผลด้านบน) และ
+**5.1 skeleton** ที่ยังไม่ apply เพราะ pages เป็น SSR ล้วน (component พร้อมใช้แล้ว).
+
+**Verify:** `svelte-check` = 0 errors / 0 warnings · `npm run build` = ✓ built (Vercel adapter).
+
+**ของใหม่ที่เกิดขึ้นจริง:**
+- `src/lib/stores/theme.ts`
+- `src/lib/components/ui/{input,textarea,select}/` (+ `index.ts`)
+- `src/lib/components/{StatCard,SessionItem,PageHeader,SkeletonCard,EmptyState}.svelte`
+- `app.css`: typography/spacing/timing/z-index tokens, launch-screen skip styles, focus ring → token
+- `button.svelte`: `size="xl"`
+- migrate `text-[10px]`/`text-[11px]` → `text-2xs` ทั้ง codebase (0 เหลือ)
 
 ---
 
