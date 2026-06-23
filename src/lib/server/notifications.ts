@@ -1,6 +1,7 @@
 import { db } from './db';
 import { notifications, users } from './schema';
 import { ne } from 'drizzle-orm';
+import { sendPushToUser } from './push';
 
 export async function createNotification(
     userId: number,
@@ -17,6 +18,9 @@ export async function createNotification(
             message,
             link
         });
+        // Fire-and-forget web push to the recipient's devices.
+        void sendPushToUser(userId, { title, body: message, url: link })
+            .catch((e) => console.error('push send failed:', e));
     } catch (error) {
         console.error('Failed to create notification:', error);
     }

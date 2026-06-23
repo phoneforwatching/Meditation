@@ -1,6 +1,9 @@
 <script lang="ts">
     import { enhance } from "$app/forms";
     import { fade } from "svelte/transition";
+    import { onMount } from "svelte";
+    import DailyReminder from "$lib/components/DailyReminder.svelte";
+    import { enablePush, disablePush, pushSupported } from "$lib/push";
 
     export let data;
 
@@ -8,6 +11,33 @@
     let message = "";
     let messageType: "success" | "error" = "success";
     let previewUrl: string | null = data.profile.avatarUrl;
+
+    let pushSupportedFlag = false;
+    let pushEnabled = false;
+    let pushBusy = false;
+
+    onMount(async () => {
+        pushSupportedFlag = pushSupported();
+        if (pushSupportedFlag && navigator.serviceWorker) {
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            pushEnabled = !!sub && Notification.permission === "granted";
+        }
+    });
+
+    async function togglePush() {
+        pushBusy = true;
+        try {
+            if (pushEnabled) {
+                await disablePush();
+                pushEnabled = false;
+            } else {
+                pushEnabled = await enablePush();
+            }
+        } finally {
+            pushBusy = false;
+        }
+    }
 
     function handleFileChange(e: Event) {
         const input = e.target as HTMLInputElement;
@@ -164,4 +194,39 @@
             </form>
         </div>
     </div>
+
+    {#if pushSupportedFlag}
+        <div
+            class="max-w-md mx-auto mt-4 bg-white rounded-2xl shadow-sm border border-slate-100 px-6 py-5"
+        >
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <p class="text-sm font-semibold text-slate-800">
+                        Push notifications
+                    </p>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Get nudges & messages even when the app is closed
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    on:click={togglePush}
+                    disabled={pushBusy}
+                    aria-pressed={pushEnabled}
+                    aria-label="Toggle push notifications"
+                    class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 {pushEnabled
+                        ? 'bg-sage'
+                        : 'bg-slate-300'}"
+                >
+                    <span
+                        class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform {pushEnabled
+                            ? 'translate-x-6'
+                            : 'translate-x-1'}"
+                    ></span>
+                </button>
+            </div>
+        </div>
+    {/if}
+
+    <DailyReminder />
 </div>

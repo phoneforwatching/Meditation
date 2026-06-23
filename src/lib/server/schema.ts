@@ -82,6 +82,15 @@ export const messages = pgTable('messages', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const pushSubscriptions = pgTable('push_subscriptions', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
 export const notifications = pgTable('notifications', {
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => users.id).notNull(),
