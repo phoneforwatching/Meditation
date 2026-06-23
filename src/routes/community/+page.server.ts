@@ -1,22 +1,13 @@
 import { db } from '$lib/server/db';
-import { users, profiles, dailyCheckins } from '$lib/server/schema';
-import { desc, eq, sql, and, gte } from 'drizzle-orm';
+import { dailyCheckins } from '$lib/server/schema';
+import { desc, gte } from 'drizzle-orm';
+import { getTopMeditators } from '$lib/server/queries';
 
 export async function load({ locals }) {
     // Get 24 hours ago timestamp
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // Fetch users and profiles
-    const usersData = await db.select({
-        id: users.id,
-        displayName: profiles.displayName,
-        totalMinutes: profiles.totalMinutes,
-        avatarUrl: profiles.avatarUrl,
-    })
-        .from(users)
-        .leftJoin(profiles, eq(users.id, profiles.userId))
-        .orderBy(desc(profiles.totalMinutes))
-        .limit(50);
+    const usersData = await getTopMeditators(50);
 
     // Fetch active check-ins (last 24h)
     const activeCheckins = await db.select()

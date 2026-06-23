@@ -339,6 +339,27 @@ const translations = {
             moodDown: 'Mood declining',
             moodStable: 'Mood stable',
             weeklyAvgMood: 'This week\'s mood'
+        },
+        onboarding: {
+            welcome: 'Welcome to BREATHE',
+            intro: "Let's set up your practice in 30 seconds",
+            goalQuestion: 'What brings you here?',
+            goalCalm: 'Reduce stress',
+            goalCalmDesc: 'Find calm and ease anxiety',
+            goalSleep: 'Sleep better',
+            goalSleepDesc: 'Wind down and rest deeply',
+            goalFocus: 'Improve focus',
+            goalFocusDesc: 'Sharpen attention and clarity',
+            goalMinutesQuestion: 'How many minutes a day?',
+            goalMinutesHint: 'You can change this anytime',
+            perDay: 'min / day',
+            readyTitle: "You're all set",
+            readyDesc: 'We picked a breathing rhythm for your goal. Start with just one minute.',
+            recommended: 'Recommended for you',
+            start: 'Start my first session',
+            next: 'Next',
+            back: 'Back',
+            skip: 'Skip for now'
         }
     },
     th: {
@@ -677,6 +698,27 @@ const translations = {
             moodDown: 'อารมณ์แย่ลง',
             moodStable: 'อารมณ์คงที่',
             weeklyAvgMood: 'อารมณ์สัปดาห์นี้'
+        },
+        onboarding: {
+            welcome: 'ยินดีต้อนรับสู่ BREATHE',
+            intro: 'ตั้งค่าการฝึกของคุณใน 30 วินาที',
+            goalQuestion: 'อะไรพาคุณมาที่นี่?',
+            goalCalm: 'คลายความเครียด',
+            goalCalmDesc: 'หาความสงบ คลายความกังวล',
+            goalSleep: 'นอนหลับดีขึ้น',
+            goalSleepDesc: 'ผ่อนคลายก่อนเข้านอน',
+            goalFocus: 'เพิ่มสมาธิ',
+            goalFocusDesc: 'จดจ่อและคิดได้ชัดเจน',
+            goalMinutesQuestion: 'ตั้งเป้ากี่นาทีต่อวัน?',
+            goalMinutesHint: 'เปลี่ยนได้ทุกเมื่อ',
+            perDay: 'นาที / วัน',
+            readyTitle: 'พร้อมแล้ว',
+            readyDesc: 'เราเลือกจังหวะหายใจให้ตามเป้าหมายของคุณ เริ่มจากแค่หนึ่งนาที',
+            recommended: 'แนะนำสำหรับคุณ',
+            start: 'เริ่มเซสชันแรก',
+            next: 'ถัดไป',
+            back: 'ย้อนกลับ',
+            skip: 'ข้ามไปก่อน'
         }
     }
 };

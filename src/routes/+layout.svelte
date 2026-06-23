@@ -18,7 +18,9 @@
   // Determine if current page needs dark theme (for sleep page)
   $: isDarkPage = $page.url.pathname === "/sleep";
   $: isAuthPage =
-    $page.url.pathname === "/login" || $page.url.pathname === "/signup";
+    $page.url.pathname === "/login" ||
+    $page.url.pathname === "/signup" ||
+    $page.url.pathname === "/welcome";
 
   // Helper function for navigation item classes
   function getNavItemClass(path: string, isDark: boolean, currentPath: string) {

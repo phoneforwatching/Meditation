@@ -41,12 +41,13 @@ export async function POST({ request, cookies }) {
             avatarUrl: supabaseUser.user_metadata.avatar_url,
         });
 
-        // Create account
+        // Record the provider linkage. We intentionally do NOT persist the
+        // Supabase access token — it's never read back (the app issues its own
+        // JWT session) and storing it plaintext is a needless risk at rest.
         await db.insert(accounts).values({
             userId: user.id,
             provider: 'google', // Assuming Google for now, or extract from identities
             providerAccountId: supabaseUser.id,
-            accessToken: accessToken,
         });
     } else {
         // Check/Create Profile if missing
@@ -77,7 +78,6 @@ export async function POST({ request, cookies }) {
                 userId: user.id,
                 provider: 'google',
                 providerAccountId: supabaseUser.id,
-                accessToken: accessToken,
             });
         }
     }

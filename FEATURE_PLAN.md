@@ -117,9 +117,9 @@
 > ✅ **Security check (ผ่าน):** ตรวจแล้ว — `.env` และ `client_secret_*.json` ถูก `.gitignore` ครอบไว้ และ **ไม่ได้ถูก track ใน git** (track แค่ `.env.example`). ไฟล์เหล่านี้ยังนั่งอยู่ใน working dir เฉย ๆ ลบทิ้งได้เพื่อความสะอาด ไม่ต้อง rotate key
 
 ### Phase 1 — Deepen the Core (1–2 สัปดาห์) · retention
-- [ ] **Onboarding flow** 3 หน้าจอ (5.3) → activation
-- [ ] **Breathing patterns** พร้อม visual guide ในหน้า timer (5.1 ส่วนแรก)
-- [ ] **Daily reminder** ที่ทำงานจริง: PWA notification + "streak กำลังหลุด" (5.2)
+- [x] **Breathing patterns** พร้อม visual guide ในหน้า timer (5.1 ส่วนแรก) — Box 4·4·4·4 / 4·7·8 / 4·6, วงกลม+ring ขยาย-หดตามจังหวะ, label หายใจเข้า/กลั้น/ออก, จำค่าใน localStorage ✅ ผ่าน build
+- [x] **Onboarding flow** 3 หน้าจอ (5.3) → activation — `/welcome`: เลือกเป้าหมาย (คลายเครียด/นอนหลับ/โฟกัส) → ผูก breathing pattern+เสียง+เป้าหมายนาที → first session. บันทึก daily goal ผ่าน `POST /api/settings/goal`. trigger อัตโนมัติเมื่อ user ใหม่ (0 session) ✅ ผ่าน build
+- [ ] **Daily reminder** ที่ทำงานจริง: PWA notification + "streak กำลังหลุด" (5.2) — มี `DailyReminder.svelte` อยู่แล้ว ต้องตรวจ/wire ให้ทำงานจริง
 - [ ] Empty states + resume button (5.4)
 
 ### Phase 2 — Content & Habit (2–4 สัปดาห์)

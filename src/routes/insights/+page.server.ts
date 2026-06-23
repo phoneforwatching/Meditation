@@ -2,55 +2,7 @@ import { db } from '$lib/server/db';
 import { meditationSessions } from '$lib/server/schema';
 import { eq, and, desc, sql, gt, isNotNull, gte } from 'drizzle-orm';
 import { redirect } from '@sveltejs/kit';
-
-function computeBestStreak(dates: string[]): number {
-    if (dates.length === 0) return 0;
-    let best = 1;
-    let current = 1;
-    for (let i = 1; i < dates.length; i++) {
-        const prev = new Date(dates[i - 1]);
-        const curr = new Date(dates[i]);
-        const diffDays = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-            current++;
-            best = Math.max(best, current);
-        } else {
-            current = 1;
-        }
-    }
-    return best;
-}
-
-function computeCurrentStreak(dates: string[]): number {
-    if (dates.length === 0) return 0;
-    const formatDateKey = (d: Date) => {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${y}-${m}-${day}`;
-    };
-    const dateSet = new Set(dates);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let streak = 0;
-    let check = new Date(today);
-
-    if (dateSet.has(formatDateKey(check))) {
-        while (dateSet.has(formatDateKey(check))) {
-            streak++;
-            check.setDate(check.getDate() - 1);
-        }
-    } else {
-        check.setDate(check.getDate() - 1);
-        if (dateSet.has(formatDateKey(check))) {
-            while (dateSet.has(formatDateKey(check))) {
-                streak++;
-                check.setDate(check.getDate() - 1);
-            }
-        }
-    }
-    return streak;
-}
+import { bestStreak as computeBestStreak, currentStreak as computeCurrentStreak } from '$lib/server/streak';
 
 type TimeBucket = 'morning' | 'afternoon' | 'evening' | 'night';
 

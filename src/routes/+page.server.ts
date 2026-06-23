@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { meditationSessions, profiles } from '$lib/server/schema';
 import { eq, desc, and, sql, gt, gte, isNotNull } from 'drizzle-orm';
 import { redirect, fail } from '@sveltejs/kit';
+import { formatDateKey, currentStreak } from '$lib/server/streak';
 
 export async function load({ locals }) {
     if (!locals.user) {
@@ -71,13 +72,6 @@ export async function load({ locals }) {
             ))
     ]);
 
-    const formatDateKey = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
     const normalizeDay = (value: string | Date) => {
         if (typeof value === 'string') return value;
         return formatDateKey(value);
@@ -87,48 +81,8 @@ export async function load({ locals }) {
     const totalSessions = Number(totals[0]?.totalSessions ?? 0);
     const dailyGoalMinutes = Math.max(1, Number(profileRows[0]?.dailyGoalMinutes ?? 10));
 
-    // Simple streak calculation
-    let streak = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const sessionDates = new Set(dailyRows.map(row => normalizeDay(row.day)));
-
-    let currentCheck = new Date(today);
-    const todayStr = formatDateKey(currentCheck);
-
-    if (sessionDates.has(todayStr)) {
-        // Meditated today
-        while (true) {
-            const dateStr = formatDateKey(currentCheck);
-            if (sessionDates.has(dateStr)) {
-                streak++;
-                currentCheck.setDate(currentCheck.getDate() - 1);
-            } else {
-                break;
-            }
-        }
-    } else {
-        // Check yesterday
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = formatDateKey(yesterday);
-
-        if (sessionDates.has(yesterdayStr)) {
-            currentCheck = yesterday;
-            while (true) {
-                const dateStr = formatDateKey(currentCheck);
-                if (sessionDates.has(dateStr)) {
-                    streak++;
-                    currentCheck.setDate(currentCheck.getDate() - 1);
-                } else {
-                    break;
-                }
-            }
-        } else {
-            streak = 0;
-        }
-    }
+    const streak = currentStreak(sessionDates);
 
     // Group by type
     const typeDistribution: Record<string, number> = {};
