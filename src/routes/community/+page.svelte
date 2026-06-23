@@ -51,6 +51,27 @@
     5: "border-green-400",
   };
 
+  function relativeTime(value: Date | string | null) {
+    if (!value) return "";
+    const diff = Math.max(0, Date.now() - new Date(value).getTime());
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return $locale === "th" ? "เมื่อกี้" : "just now";
+    if (mins < 60) return $locale === "th" ? `${mins} นาทีที่แล้ว` : `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return $locale === "th" ? `${hrs} ชม.` : `${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    return $locale === "th" ? `${days} วัน` : `${days}d`;
+  }
+
+  function feedIcon(type: string | null) {
+    if (type === "Focus") return "📍";
+    if (type === "Breathing" || type === "Breath") return "🌬️";
+    if (type === "Sleep") return "😴";
+    if (type === "Mindfulness") return "🧘";
+    if (type === "Loving-Kindness") return "💖";
+    return "✨";
+  }
+
   function getTimeOfDayLabel(value: string) {
     if (value === "morning") return $t("community.timeMorning");
     if (value === "afternoon") return $t("community.timeAfternoon");
@@ -355,8 +376,64 @@
     
     <h1 class="text-4xl font-bold text-sage">{$t("community.title")}</h1>
     <p class="text-slate/60">{$t("community.subtitle")}</p>
-    
+
   </div>
+
+  <!-- Activity Feed -->
+  {#if data.activity.length > 0}
+    <div class="max-w-2xl mx-auto w-full px-4 mb-6">
+      <div
+        class="rounded-2xl border border-earth/15 bg-white/70 backdrop-blur p-4 shadow-sm"
+      >
+        <h2 class="mb-3 flex items-center gap-2 text-sm font-bold text-sage">
+          <span>✨</span>
+          {$locale === "th" ? "ความเคลื่อนไหวล่าสุด" : "Recent activity"}
+        </h2>
+        <div class="max-h-72 space-y-2.5 overflow-y-auto pr-1">
+          {#each data.activity as item}
+            <div class="flex items-center gap-3">
+              <div
+                class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sage/10"
+              >
+                {#if item.avatarUrl}
+                  <img
+                    src={item.avatarUrl}
+                    alt=""
+                    class="h-full w-full object-cover"
+                  />
+                {:else if item.kind === "checkin"}
+                  <span class="text-base">{MOODS[item.mood] ?? "📸"}</span>
+                {:else}
+                  <span class="text-base">{feedIcon(item.sessionType)}</span>
+                {/if}
+              </div>
+              <p class="flex-1 text-xs leading-snug text-slate">
+                <span class="font-semibold">
+                  {item.displayName ??
+                    ($locale === "th" ? "ใครบางคน" : "Someone")}
+                </span>
+                {#if item.kind === "session"}
+                  {$locale === "th"
+                    ? `นั่งสมาธิ ${item.minutes} นาที`
+                    : `meditated ${item.minutes} min`}
+                  <span class="text-slate/50">· {item.sessionType}</span>
+                {:else}
+                  {$locale === "th" ? "โพสต์เช็คอิน" : "posted a check-in"}
+                  {MOODS[item.mood] ?? ""}
+                  {#if item.caption}
+                    <span class="text-slate/50">· “{item.caption}”</span>
+                  {/if}
+                {/if}
+              </p>
+              <span class="shrink-0 text-[10px] text-slate/40">
+                {relativeTime(item.at)}
+              </span>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </div>
+  {/if}
 
   <!-- Forest Scene Container -->
   <div class="flex-1 relative pb-12 min-h-[60vh] overflow-hidden">
