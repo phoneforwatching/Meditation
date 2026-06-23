@@ -27,6 +27,8 @@
 
   $: topType = data.typeDistribution.length > 0 ? data.typeDistribution[0] : null;
 
+  $: maxTagCount = data.tagFrequency.length > 0 ? data.tagFrequency[0].count : 1;
+
   function getTypeIcon(type: string): string {
     const icons: Record<string, string> = {
       Breath: "\u{1F32C}\uFE0F",
@@ -275,6 +277,37 @@
               {item.count}
               {$t("insights.sessions")}
             </p>
+          </div>
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  <!-- Tag frequency -->
+  {#if data.tagFrequency.length > 0}
+    <section>
+      <h2 class="text-lg font-bold text-slate mb-3">
+        {$locale === "th" ? "อารมณ์ & แท็กที่พบบ่อย" : "Most frequent tags"}
+      </h2>
+      <div
+        class="rounded-2xl bg-white border border-earth/10 p-4 shadow-sm space-y-2.5"
+      >
+        {#each data.tagFrequency as item}
+          <div class="flex items-center gap-3">
+            <span
+              class="w-28 shrink-0 truncate text-xs font-medium text-slate"
+            >
+              {$t(`log.tag.${item.tag}`)}
+            </span>
+            <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-sage/10">
+              <div
+                class="h-full rounded-full bg-sage transition-all"
+                style="width: {Math.max(6, (item.count / maxTagCount) * 100)}%"
+              ></div>
+            </div>
+            <span class="w-6 shrink-0 text-right text-xs font-bold text-sage">
+              {item.count}
+            </span>
           </div>
         {/each}
       </div>

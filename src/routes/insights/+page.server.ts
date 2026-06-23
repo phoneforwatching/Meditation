@@ -53,6 +53,7 @@ export async function load({ locals, url }) {
         weekdayDistribution,
         periodTotals,
         allDailyDates,
+        periodTagRows,
     ] = await Promise.all([
         // 1. Mood trend by day
         db.select({
@@ -146,9 +147,29 @@ export async function load({ locals, url }) {
             .from(meditationSessions)
             .where(baseFilter)
             .orderBy(sql`DATE(${meditationSessions.completedAt})`),
+
+        // 11. Tags within the selected period (counted in JS — comma-joined column)
+        db.select({ tags: meditationSessions.tags })
+            .from(meditationSessions)
+            .where(and(periodFilter, isNotNull(meditationSessions.tags))),
     ]);
 
     const allDates = allDailyDates.map((r) => String(r.day));
+
+    // Tag frequency: split the comma-joined `tags` column and tally.
+    const tagCounts = new Map<string, number>();
+    for (const row of periodTagRows) {
+        if (!row.tags) continue;
+        for (const raw of row.tags.split(',')) {
+            const tag = raw.trim();
+            if (!tag) continue;
+            tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+        }
+    }
+    const tagFrequency = [...tagCounts.entries()]
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
     const bestStreak = computeBestStreak(allDates);
     const currentStreak = computeCurrentStreak(allDates);
 
@@ -215,6 +236,7 @@ export async function load({ locals, url }) {
         },
         currentStreak,
         bestStreak,
+        tagFrequency,
         insights: {
             bestMoodType: bestMoodType?.sessionType ?? null,
             bestMoodTypeAvg: bestMoodType ? Number(bestMoodType.avgMood) : null,
