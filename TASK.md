@@ -4,8 +4,16 @@
 > **Phase 0 (Security & Cleanup) — เสร็จทั้งหมด:** ลบ/guard admin endpoints (migrate+backfill เป็น admin-only POST, ลบ cleanup-users), throw แทน JWT fallback, ลบ OAuth secret + junk files + debug logs, validate image upload (magic bytes + 5MB cap, helper `src/lib/server/upload.ts`), จำกัด forwarded-host เฉพาะ dev, ใส่ length limit (displayName/bio/caption/message).
 > **Phase 1 (Production Stability) — เสร็จทั้งหมด:** pg pool `max:1` serverless-safe, `totalMinutes` atomic increment + backfill เป็น single UPDATE, broadcastNotification fire-and-forget, ลบ in-memory userCache, pagination (history Prev/Next, chat DISTINCT ON, conversation last-50, sleep bound 1y), composite indexes (nudges pair, +ดู note), SW ไม่ precache mp3 / ไม่ cache `/api/`, vite basicSsl เฉพาะ dev.
 > **Verify:** `npm run check` = 0 errors · `npm run build` = success.
-> **เหลือ:** Phase 2 (eslint/prettier/CI, streak/leaderboard extraction, accounts table, Svelte 5 migration) + Phase 3 (product). 
-> **หมายเหตุ:** `svelte.config split:true` ตั้งใจไม่แตะ — เสี่ยงเกิน 12-function limit ของ Vercel Hobby. Rate limiting auth ยังไม่ทำ (ต้องเลือก lib). ต้องรัน `npm run db:indexes` เพื่อ apply composite indexes ใหม่ลง Postgres.
+> **Phase 2 — เสร็จส่วนสำคัญ:** dedup streak (`src/lib/server/streak.ts`) + leaderboard query (`queries.ts`), เลิกเก็บ OAuth token plaintext, GitHub Actions CI. ข้าม ESLint/Prettier + Svelte5 migration (noisy/low-value).
+> **Phase 3 — Top 5 product features เสร็จ:** ✅ share card (timer), ✅ breathing (มีอยู่แล้ว), ✅ tag-frequency chart (insights), ✅ community activity feed, ✅ Web Push (VAPID). *(daily reminder + onboarding = งานที่เจ้าของทำเอง)*
+>
+> **Commits:** `ed02cff` (P0+P1) · `11699b5` (P2) · `38550fc` (share card) · `fce08b5` (tag chart) · `3fb1a8f` (activity feed) · `e24ded6` (web push)
+>
+> **ต้องทำ manual ก่อน deploy:**
+> - `npm run db:indexes` (composite indexes) + `npm run db:push` หรือ apply `drizzle/0002_push_subscriptions.sql` (ตาราง push)
+> - ตั้ง env บน Vercel: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (มีใน `.env` local แล้ว)
+> - Web Push delivery จริงต้องเทสบน device จริงผ่าน HTTPS
+> **ตั้งใจไม่แตะ:** `svelte.config split:true` (เสี่ยงเกิน 12-function limit ของ Vercel Hobby). Rate limiting auth ยังไม่ทำ (ต้องเลือก lib).
 
 
 
